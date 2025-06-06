@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - DMP Analysis Tool</title>
+    <link rel="stylesheet" href="css/shared-styles.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .content {
+            text-align: left;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        /* FAQ styling moved to external stylesheet */
+        h2 {
+            margin-top: 40px;
+            color: #333;
+        }
+        p {
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div id="spinner-overlay">
+        <div class="spinner"></div>
+    </div>
+    <div class="container">
+        <!-- Include the navigation component -->
+        <div id="navigation-placeholder"></div>
+        <h1>Privacy</h1>
+        <div class="content">
+            <h2>Frequently Asked Questions</h2>
+            
+            <div class="faq-item" id="faq-1">
+                <h3>Does the tool send uploaded data to ChatGPT or any public AI training databases?</h3>
+                <p>
+                    The tool sends selected content (e.g., sentences or sections) to large language models via API (e.g., OpenAI, Anthropic/Claude) 
+                    for analysis. We do not use these services in a way that contributes to model training or public databases. However, inputs 
+                    and outputs may be retained by the provider (e.g., OpenAI) for up to 30 days for abuse monitoring, before being permanently deleted.
+                </p>
+            </div>
+            
+            <div class="faq-item">
+                <h3>If I upload a sensitive research document, is it safe from being shared or used elsewhere?</h3>
+                <p>
+                    Yes. Your files are processed in isolated, controlled environments. By default, the tool stores intermediate processing data 
+                    (such as sentence-level text and structure) for up to 30 days to support reproducibility and debugging. You can also request 
+                    immediate deletion after each session.
+                </p>
+            </div>
+            
+            <div class="faq-item">
+                <h3>Where is the data processed – and does that matter under GDPR?</h3>
+                <p>
+                    The tool is hosted on Microsoft Azure in Europe (region: North Europe), 
+                    and we ensure that all data processing and storage stay within the European Economic Area (EEA) to comply with GDPR and 
+                    institutional data protection requirements.
+                </p>
+            </div>
+            
+            <div class="faq-item">
+                <h3>What measures are in place to prevent unauthorized access?</h3>
+                <p>
+                    We use enterprise-grade security practices from Microsoft Azure, including:
+                </p>
+                <ul>
+                    <li>Role-based access control</li>
+                    <li>Encrypted data transfers and storage</li>
+                    <li>Audit logging</li>
+                    <li>Isolation between user sessions and data</li>
+                </ul>
+            </div>
+            
+            <h2>Data Collection and Usage</h2>
+            <p>
+                The DMP Analysis Tool collects and processes the text you submit for analysis. This data is used solely 
+                for the purpose of providing analysis results and recommendations for the Data Management Plan.
+            </p>
+            
+            <h2>Data Storage</h2>
+            <p>
+                Analysis results are stored in our database with a unique identifier. These results may be retained for 
+                up to 60 days to allow you to access your analysis results and export them as PDF documents. You can request 
+                immediate deletion of your data.
+            </p>
+            
+            <h2>Data Security</h2>
+            <p>
+                We implement appropriate security measures to protect your data from unauthorized access, alteration, 
+                disclosure, or destruction. All data is processed using secure connections and stored in protected databases 
+                within the European Economic Area (EEA).
+            </p>
+            
+            <h2>Third-Party Services</h2>
+            <p>
+                Our tool utilizes third-party AI services (such as OpenAI or Anthropic/Claude) for text analysis. These services 
+                are bound by their own privacy policies and data processing agreements that ensure the confidentiality of your data.
+                Data sent to these services may be retained by the provider for up to 30 days for abuse monitoring purposes before 
+                being permanently deleted.
+            </p>
+            
+            <h2>Your Rights</h2>
+            <p>
+                You have the right to request access to, correction of, or deletion of your data. If you wish to exercise 
+                these rights, please contact the system administrator.
+            </p>
+            
+            <h2>Changes to This Policy</h2>
+            <p>
+                We may update this privacy policy from time to time. Any changes will be posted on this page.
+            </p>
+        </div>
+    </div>
+    <script>
+        // Load the navigation component
+        fetch('components/navigation.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navigation-placeholder').innerHTML = data;
+            });
+            
+        // Hide spinner when everything is loaded
+        window.addEventListener('load', function() {
+            var spinner = document.getElementById('spinner-overlay');
+            if (spinner) spinner.style.opacity = 0;
+            setTimeout(function() {
+                if (spinner) spinner.style.display = 'none';
+            }, 400);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+:root {
+  /* Brand Colors */
+  --color-primary: #008292;
+  --color-secondary: #A0075F;
+  --color-accent: #003F5A;
+  --color-highlight: #ADCB00;
+  --color-soft-accent: #78C8D2;
+
+  /* UI Neutrals */
+  --color-bg: #FFFFFF;
+  --color-surface: #F5F7F9;
+  --color-border: #D6D8DA;
+  --color-text-primary: #212121;
+  --color-text-secondary: #4E4E4E;
+
+  /* Compliance Status Colors */
+  --color-compliance-yes: #008292;
+  --color-compliance-yes-bg: #BFE6EA;
+
+  --color-compliance-partial: #E0B731;
+  --color-compliance-partial-bg: #FCF1B8;
+
+  --color-compliance-no: #B2322F;
+  --color-compliance-no-bg: #EBC6C1;
+
+  --color-compliance-na: #CACACA;
+  --color-compliance-na-bg: #EFEFEF;
+}
+
+/* Example Usage */
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+}
+
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.button-primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.button-secondary {
+  background-color: var(--color-secondary);
+  color: white;
+}
+
+.status-yes {
+  background-color: var(--color-compliance-yes-bg);
+  color: var(--color-compliance-yes);
+}
+
+.status-partial {
+  background-color: var(--color-compliance-partial-bg);
+  color: var(--color-compliance-partial);
+}
+
+.status-no {
+  background-color: var(--color-compliance-no-bg);
+  color: var(--color-compliance-no);
+}
+
+.status-na {
+  background-color: var(--color-compliance-na-bg);
+  color: var(--color-compliance-na);
+}

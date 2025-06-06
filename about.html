@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About DMP Analyser</title>
+    <link rel="stylesheet" href="css/shared-styles.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .content {
+            text-align: left;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="spinner-overlay">
+        <div class="spinner"></div>
+    </div>
+    <div class="container">
+        <!-- Include the navigation component -->
+        <div id="navigation-placeholder"></div>
+        <h1>About DMP Analyser</h1>
+        <div class="content">
+            <h2>What is the DMP Analyser?</h2>
+            <p>
+                The ReproAI DMP Analyser is a specialized application designed to analyse Data Management Plans (DMPs) 
+                using advanced AI techniques. It evaluates text against a checklist of best practices 
+                and provides detailed feedback on how to improve the DMP.
+            </p>
+            
+            <h2>How It Works</h2>
+            <p>
+                Our tool uses a modular pipeline architecture that processes the text through several specialized components.
+                Each module leverages state-of-the-art large language models (LLMs) to interpret, evaluate, and summarize the DMP, 
+                ensuring nuanced and context-aware assessment at every step.
+            </p>
+            <p>These components include:
+            </p>
+            <ul>
+                <li><strong>Metadata Extractor:</strong> Identifies metadata from text, such as main title, discipline, and study type.</li>
+                <li><strong>Domain Evaluator:</strong> Analyzes the text against specific domains of DMP best practices</li>
+                <li><strong>Item Evaluator:</strong> Evaluates individual checklist items (2-10 per domain)</li>
+                <li><strong>Domain Reconciler:</strong> Harmonizes evaluations across domains and their items</li>
+                <li><strong>Domain Summarizer:</strong> Creates concise summaries of each domain's evaluation and the rating</li>
+                <li><strong>Feedback Note:</strong> Generates a feedback note with actionable recommendations for the author</li>
+            </ul>
+            
+            <h2>Features & Capabilities</h2>
+            <ul>
+                <li><strong>Customizable for Any Assessment Framework:</strong> Adaptable to various evaluation criteria and standards</li>
+                <li><strong>Built-In Data Privacy & Security by Design:</strong> Ensures your sensitive research information remains protected</li>
+                <li><strong>Integrated Support for Multiple Language Models:</strong> Leverages various AI models for comprehensive analysis</li>
+                <li><strong>Detailed, Transparent Scoring & Insights:</strong> Provides clear feedback with actionable recommendations</li>
+                <li><strong>Private, Actionable Feedback for Researchers:</strong> Delivers personalized guidance to improve your DMP</li>
+                <li><strong>Domain-specific Feedback for Developers:</strong> Offers technical insights for implementation</li>
+                <li><strong>Simple Text Input Interface:</strong> Easy-to-use interface for submitting your DMP text</li>
+                <li><strong>Comprehensive Analysis:</strong> Thorough evaluation against Finnish DMP criteria</li>
+                <li><strong>PDF Export:</strong> Download and share your analysis results in PDF format</li>
+                <li><strong>Shareable Results:</strong> Generate links to share results with colleagues</li>
+            </ul>
+            
+            <h2>Our Team</h2>
+            <ul>
+                <li><strong>Juuso Repo</strong>, juuso.repo@utu.fi, INVEST Research Flagship Centre, University of Turku</li>
+                <li><strong>Johanna Laiho-Kauranne</strong>, CSC IT Centre for Science</li>
+                <li><strong>Jukka Rantasaari</strong>, University of Turku</li>
+            </ul>
+            
+
+            <hr>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 24px;">
+                <img src="img/Cc-by-nc_icon.png" alt="Creative Commons BY-NC" style="height: 36px; width: auto;">
+                <span style="font-size: 0.95em;">
+                    This work is licensed under a 
+                    <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC 4.0</a>.
+                </span>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Load the navigation component
+        fetch('components/navigation.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navigation-placeholder').innerHTML = data;
+            });
+            
+        // Hide spinner when everything is loaded
+        window.addEventListener('load', function() {
+            var spinner = document.getElementById('spinner-overlay');
+            if (spinner) spinner.style.opacity = 0;
+            setTimeout(function() {
+                if (spinner) spinner.style.display = 'none';
+            }, 400);
+        });
+    </script>
+</body>
+</html>

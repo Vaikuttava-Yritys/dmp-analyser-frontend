@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMP Analyser</title>
+    <link rel="stylesheet" href="css/shared-styles.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="spinner-overlay">
+    <div class="spinner"></div>
+  </div>
+    <div class="container">
+        <!-- Include the navigation component -->
+        <div id="navigation-placeholder"></div>
+        <h1>DMP Analyser</h1>
+        <div class="grey-box">
+            <div class="feedback-pdf-row">
+                <div class="feedback-prompt">
+                    Early version — try it out and share <a href="feedback.html">feedback</a>.
+                </div>
+                <div>
+                    <a href="feedback_view.html?token=7020cb88-5035-44be-a132-906d914935f0" class="example-button">
+                        Example Result
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div id="api-status"></div>
+        <div id="analysis-form" style="display: none;">
+            <form id="dmp-form">
+                <div class="form-group">
+                    <label for="text-input">Enter your Data Management Plan (DMP) text for analysis:</label>
+                    <textarea id="text-input" rows="10" placeholder="Paste your text here..."></textarea>
+                </div>
+                
+                <div class="form-group file-upload-coming-soon">
+                    <label>Upload DMP file: <span class="coming-soon-badge">Coming Soon</span></label>
+                    <div class="file-upload-placeholder">
+                        <span class="file-icon">📄</span>
+                        <span class="file-text">File upload will be available soon</span>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="checklist-select">Assessment Criteria:</label>
+                        <select id="checklist-select">
+                            <option value="finnish_dmp_evaluation" selected>Finnish DMP Evaluation (Full)</option>
+                            <option value="finnish_dmp_evaluation_1domain">Finnish DMP Evaluation (1 Domain)</option>
+                        </select>
+                    </div>
+                    <div class="form-group half">
+                        <label for="config-select">Analysis Configuration:</label>
+                        <select id="config-select">
+                            <option value="Full-GPT4-turbo-preview" selected>Full GPT-4 Turbo</option>
+                            <option value="Domains-only-GPT4-turbo">Domains-only GPT-4 Turbo</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="submit" id="submit-btn">Run Analysis</button>
+                
+                <div class="info-box">
+                    <p><strong>Note:</strong> This version uses the Finnish DMP evaluation criteria. We have processed it for AI analysis. <a href="#" id="download-checklist-btn">See PDF</a>. <br> The tool supports multiple assessment frameworks. Please contact us to add your own!</p>
+                    <p><strong>Reference:</strong> DMPTuuli working group. (2021). <a href="https://doi.org/10.5281/zenodo.4762326" target="_blank">Finnish DMP evaluation guidance</a>. Zenodo.</p>
+                </div>
+            </form>
+        </div>
+        <div id="analysis-status" style="display: none;">
+            <h2>Analysis Status</h2>
+            <p id="status-message">Your DMP is being analysed. This can take 2-5 minutes to complete...</p>
+            <div class="loader"></div>
+        </div>
+        <div id="analysis-result" style="display: none;">
+            <h2>Analysis Complete</h2>
+            <div class="grey-box">
+                <p>Your analysis is ready. View your results here:</p>
+                <div class="result-link-container">
+                    <a id="results-direct-link" href="#" class="primary-link" target="_blank">View Analysis Results</a>
+                </div>
+                
+                <div class="shareable-link-container">
+                    <p><strong>Shareable link:</strong></p>
+                    <div class="copy-link-box">
+                        <input type="text" id="shareable-link" readonly>
+                        <button id="copy-link-btn" class="copy-button" title="Copy to clipboard">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>
+                    </div>
+                    <p class="copy-success" id="copy-success-message">Link copied to clipboard!</p>
+                </div>
+                
+                <div class="pdf-export-container">
+                    <button id="export-pdf-btn" class="export-button pdf-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: text-bottom;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="15 15 12 18 9 15"></polyline></svg>
+                        PDF Report
+                    </button>
+                </div>
+            </div>
+        </div>
+            <hr>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 24px;">
+                <img src="img/Cc-by-nc_icon.png" alt="Creative Commons BY-NC" style="height: 36px; width: auto;">
+                <span style="font-size: 0.95em;">
+                    This work is licensed under a 
+                    <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC 4.0</a>.
+                </span>
+            </div>
+    </div>
+    <script src="app.js"></script>
+    <script>
+        // Load the navigation component
+        fetch('components/navigation.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navigation-placeholder').innerHTML = data;
+            });
+            
+        // Hide spinner when everything is loaded
+        window.addEventListener('load', function() {
+            var spinner = document.getElementById('spinner-overlay');
+            if (spinner) spinner.style.opacity = 0;
+            setTimeout(function() {
+                if (spinner) spinner.style.display = 'none';
+            }, 400);
+        });
+    </script>
+</body>
+</html>

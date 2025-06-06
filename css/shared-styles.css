@@ -1,0 +1,537 @@
+/* Shared styles for DMP Analysis Tool */
+
+/* Base styles */
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f8f8fa;
+    margin: 0;
+    padding: 0;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 900px;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    padding: 32px;
+}
+
+/* Typography */
+h1 {
+    font-size: 2rem;
+    margin-bottom: 24px;
+    color: #0057b8;
+    text-align: center;
+}
+
+h2 {
+    font-size: 1.5em;
+    margin-top: 2em;
+    color: #3a3a5a;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.2em;
+}
+
+h3 {
+    margin-top: 1.5em;
+    color: #3a3a5a;
+}
+
+.centered {
+    text-align: center;
+}
+
+/* Navigation */
+.nav {
+    text-align: center;
+    margin: 20px 0;
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.nav a {
+    margin: 0 15px;
+    color: #0057b8;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.nav a:hover {
+    color: #003f7d;
+    text-decoration: none;
+}
+
+/* Form elements */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-group.half {
+    flex: 1;
+    min-width: 0;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+select:focus {
+    outline: none;
+    border-color: #0057b8;
+    box-shadow: 0 0 0 2px rgba(0, 87, 184, 0.2);
+}
+
+/* Buttons */
+button {
+    background: #0057b8;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 12px 20px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: block;
+    margin: 20px auto;
+    min-width: 150px;
+}
+
+button:hover {
+    background: #003f7d;
+}
+
+button:disabled {
+    background-color: #cccccc;
+    color: #888888;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+button:disabled:hover {
+    background-color: #cccccc;
+}
+
+/* Intro text styling */
+.intro-text {
+    text-align: center;
+    margin: 10px auto 30px;
+    font-size: 1.1em;
+    color: #555;
+    max-width: 700px;
+    line-height: 1.5;
+}
+
+.intro-text a {
+    color: #0057b8;
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+.intro-text a:hover {
+    color: #003f7d;
+}
+
+/* Coming Soon File Upload Placeholder */
+.file-upload-coming-soon {
+    margin-top: 15px;
+    margin-bottom: 25px;
+}
+
+.coming-soon-badge {
+    background-color: #ff9800;
+    color: white;
+    font-size: 0.8em;
+    padding: 3px 8px;
+    border-radius: 12px;
+    margin-left: 10px;
+    font-weight: normal;
+}
+
+.file-upload-placeholder {
+    border: 2px dashed #ccc;
+    border-radius: 5px;
+    padding: 20px;
+    text-align: center;
+    background-color: #f9f9f9;
+    color: #888;
+    margin-top: 8px;
+    cursor: not-allowed;
+}
+
+.file-icon {
+    font-size: 24px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+.file-text {
+    font-style: italic;
+}
+
+/* Button group styling */
+.button-group {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.button-group button {
+    margin: 0;
+}
+
+/* PDF Button styling */
+.pdf-button, .example-button {
+    background-color: transparent;
+    color: #0057b8;
+    border: 1px solid #0057b8;
+    padding: 6px 12px;
+    font-size: 0.9em;
+    min-width: auto;
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    box-shadow: none;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+.pdf-button:hover, .example-button:hover {
+    background-color: #f0f7ff;
+    color: #003f7d;
+    border-color: #003f7d;
+    text-decoration: none;
+}
+
+/* Feedback and PDF row layout */
+.feedback-pdf-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+/* Grey box styling */
+.grey-box {
+    background: #fafbfc;
+    padding: 1.5em;
+    border-radius: 8px;
+    margin-bottom: 1.5em;
+}
+
+/* Results link styling */
+.result-link-container {
+    margin: 1em 0 1.5em;
+    text-align: center;
+}
+
+.primary-link {
+    display: inline-block;
+    background-color: #0057b8;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.primary-link:hover {
+    background-color: #003f7d;
+    text-decoration: none;
+    color: white;
+}
+
+/* Shareable link styling */
+.shareable-link-container {
+    margin: 1.5em 0;
+}
+
+.copy-link-box {
+    display: flex;
+    margin: 0.5em 0;
+}
+
+.copy-link-box input {
+    flex-grow: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-right: none;
+    border-radius: 4px 0 0 4px;
+    font-size: 0.9em;
+    background-color: #f8f8f8;
+}
+
+.copy-button {
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 0 4px 4px 0;
+    padding: 8px 12px;
+    cursor: pointer;
+    margin: 0;
+    min-width: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.copy-button:hover {
+    background-color: #e0e0e0;
+}
+
+.copy-success {
+    color: #28a745;
+    font-size: 0.9em;
+    margin-top: 0.5em;
+    display: none;
+}
+
+.feedback-prompt {
+    font-size: 0.95em;
+    color: #555;
+}
+
+.feedback-prompt a {
+    color: #0057b8;
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+.feedback-prompt a:hover {
+    color: #003f7d;
+}
+
+.export-button { 
+    padding: 8px 16px; 
+    background-color: #0057b8; 
+    color: white; 
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.export-button:hover {
+    background-color: #003f7d;
+}
+
+/* Status indicators */
+#analysis-status, #analysis-result {
+    text-align: center;
+    padding: 20px 0;
+}
+
+#api-status {
+    text-align: center;
+    padding: 10px;
+    margin-bottom: 20px;
+}
+
+.status-ok {
+    color: #2e7d32;
+    background-color: #e8f5e9;
+    padding: 10px;
+    border-radius: 4px;
+    border-left: 4px solid #2e7d32;
+}
+
+.status-error {
+    color: #c62828;
+    background-color: #ffebee;
+    padding: 10px;
+    border-radius: 4px;
+    border-left: 4px solid #c62828;
+}
+
+/* API status message styles */
+.api-status {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.api-status.online {
+    background-color: #e6f7e6;
+    color: #2e7d32;
+    border: 1px solid #2e7d32;
+}
+
+.api-status.offline {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #c62828;
+}
+
+/* Info box styling */
+.info-box {
+    margin: 15px 0;
+    padding: 15px;
+    background-color: #e8f4fd;
+    border-left: 4px solid #2196F3;
+    border-radius: 4px;
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+.info-box a {
+    color: #0057b8;
+    text-decoration: none;
+}
+
+.info-box a:hover {
+    text-decoration: underline;
+}
+
+/* Spinner overlay styles */
+#spinner-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.85);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s;
+}
+
+.spinner {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #0057b8;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Compliance badges */
+.compliance-badge { 
+    display: inline-block; 
+    padding: 0.3em 0.9em; 
+    border-radius: 16px; 
+    font-size: 0.95em; 
+    margin-right: 0.7em; 
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
+}
+
+.compliance-FullyMet, .compliance-Excellent { 
+    background: #c6f6d5; 
+    color: #137333; 
+}
+
+.compliance-PartiallyMet, .compliance-Satisfactory { 
+    background: #fff3cd; 
+    color: #856404; 
+}
+
+.compliance-NotMet, .compliance-Poor { 
+    background: #f8d7da; 
+    color: #a71d2a; 
+}
+
+.compliance-Unknown { 
+    background: #e2e3e5; 
+    color: #495057; 
+}
+
+/* Table styles */
+.results-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 1em; 
+    margin-bottom: 2em; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+}
+
+.results-table th, .results-table td { 
+    border: 1px solid #e0e0e0; 
+    padding: 0.8em 0.6em; 
+    text-align: left; 
+    vertical-align: top; 
+}
+
+.results-table th { 
+    background: #f1f5fb; 
+    position: sticky; 
+    top: 0; 
+}
+
+.results-table tr:nth-child(even) { 
+    background: #f9f9fb; 
+}
+
+.results-table tr:hover { 
+    background: #eef2f5; 
+}
+
+/* Loading and error states */
+.loading, .error { 
+    margin: 2em 0; 
+    font-size: 1.2em; 
+    text-align: center; 
+    padding: 2em; 
+}
+
+/* Download section styling */
+.download-section {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.download-section a {
+    color: #0066cc;
+    text-decoration: none;
+}
+
+.download-section a:hover {
+    text-decoration: underline;
+}
+
+/* Loader animation */
+.loader {
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #0057b8;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}

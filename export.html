@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMP Analysis Results - Download PDF</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .nav {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .nav a {
+            margin: 0 10px;
+            color: #0057b8;
+            text-decoration: none;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="index.html">Home</a> | 
+            <a href="example.html">Example</a> | 
+            <a href="about.html">About</a> | 
+            <a href="privacy.html">Privacy</a>
+        </div>
+        <h1>DMP Analysis Results</h1>
+        
+        <main>
+            <div class="export-container">
+                <h2>Your DMP Analysis Results</h2>
+                <p id="status-message">Loading your analysis results...</p>
+                <p id="error-message" class="error"></p>
+                
+                <div class="button-container">
+                    <button id="download-pdf" class="button" disabled>Download PDF Report</button>
+                </div>
+                
+                <div class="info-box">
+                    <h3>About DMP Analysis</h3>
+                    <p>This PDF report contains the results of your Data Management Plan (DMP) analysis. 
+                    It includes detailed feedback and recommendations to improve your DMP based on best practices.</p>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>© 2025 ReproAI DMP Analyze</p>
+        </footer>
+    </div>
+    
+    <script src="pdf-export.js"></script>
+</body>
+</html>

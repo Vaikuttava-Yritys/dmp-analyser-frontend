@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMP Analyzer - Feedback</title>
+    <link rel="stylesheet" href="css/shared-styles.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .feedback-form {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+        
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .feedback-list {
+            margin-top: 30px;
+        }
+        
+        .feedback-item {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .feedback-email {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 5px;
+        }
+        
+        .feedback-text {
+            margin-top: 5px;
+        }
+        
+        .feedback-date {
+            color: #999;
+            font-size: 0.8em;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div id="spinner-overlay">
+        <div class="spinner"></div>
+    </div>
+    <div class="container">
+        <!-- Include the navigation component -->
+        <div id="navigation-placeholder"></div>
+        <h1 class="centered">DMP Analyzer</h1>
+        
+        <div class="success-message" id="success-message">
+            Thank you for your feedback! We appreciate your input.
+        </div>
+        
+        <div class="error-message" id="error-message">
+            There was an error submitting your feedback. Please try again.
+        </div>
+        
+        <div class="feedback-form">
+            <h2>Interested? Get updates and share your thoughts.</h2>
+            <form id="feedbackForm">
+                <div class="form-group">
+                    <label for="email">Email (optional):</label>
+                    <input type="email" id="email" name="email" placeholder="your.email@example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="feedback">Your feedback:</label>
+                    <textarea id="feedback" name="feedback" placeholder="Share your thoughts, suggestions, or questions..."></textarea>
+                </div>
+                
+                <button type="submit" disabled title="Feedback submission is not implemented yet">Submit Feedback</button>
+            </form>
+        </div>
+        
+        <div class="feedback-list" id="feedback-list" style="display: none;">
+            <h2>Recent Feedback</h2>
+            <div id="feedback-items">
+                <!-- Feedback items will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Store feedback in local storage for demonstration
+        const STORAGE_KEY = 'reproai_feedback';
+        
+        // Load existing feedback from local storage
+        function loadFeedback() {
+            const feedbackItems = document.getElementById('feedback-items');
+            feedbackItems.innerHTML = '';
+            
+            const storedFeedback = localStorage.getItem(STORAGE_KEY);
+            if (storedFeedback) {
+                const feedbackArray = JSON.parse(storedFeedback);
+                
+                if (feedbackArray.length === 0) {
+                    feedbackItems.innerHTML = '<p>No feedback submitted yet.</p>';
+                    return;
+                }
+                
+                // Sort by date (newest first)
+                feedbackArray.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                // Add each feedback item to the list
+                feedbackArray.forEach(item => {
+                    const feedbackItem = document.createElement('div');
+                    feedbackItem.className = 'feedback-item';
+                    
+                    const emailElement = document.createElement('div');
+                    emailElement.className = 'feedback-email';
+                    emailElement.textContent = item.email ? `From: ${item.email}` : 'Anonymous';
+                    
+                    const textElement = document.createElement('div');
+                    textElement.className = 'feedback-text';
+                    textElement.textContent = item.feedback;
+                    
+                    const dateElement = document.createElement('div');
+                    dateElement.className = 'feedback-date';
+                    dateElement.textContent = new Date(item.date).toLocaleString();
+                    
+                    feedbackItem.appendChild(emailElement);
+                    feedbackItem.appendChild(textElement);
+                    feedbackItem.appendChild(dateElement);
+                    
+                    feedbackItems.appendChild(feedbackItem);
+                });
+            } else {
+                feedbackItems.innerHTML = '<p>No feedback submitted yet.</p>';
+            }
+        }
+        
+        // Save feedback to local storage
+        function saveFeedback(email, feedback) {
+            const newFeedback = {
+                email: email,
+                feedback: feedback,
+                date: new Date().toISOString()
+            };
+            
+            let feedbackArray = [];
+            const storedFeedback = localStorage.getItem(STORAGE_KEY);
+            
+            if (storedFeedback) {
+                feedbackArray = JSON.parse(storedFeedback);
+            }
+            
+            feedbackArray.push(newFeedback);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(feedbackArray));
+        }
+        
+        // Handle form submission
+        document.getElementById('feedbackForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const feedback = document.getElementById('feedback').value.trim();
+            
+            if (!feedback) {
+                document.getElementById('error-message').textContent = 'Please enter your feedback.';
+                document.getElementById('error-message').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('error-message').style.display = 'none';
+                }, 3000);
+                return;
+            }
+            
+            // Save the feedback
+            saveFeedback(email, feedback);
+            
+            // Show success message
+            document.getElementById('success-message').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('success-message').style.display = 'none';
+            }, 3000);
+            
+            // Clear the form
+            document.getElementById('email').value = '';
+            document.getElementById('feedback').value = '';
+            
+            // Reload the feedback list
+            loadFeedback();
+        });
+        
+        // Load feedback when the page loads
+        document.addEventListener('DOMContentLoaded', loadFeedback);
+    </script>
+    <script>
+        // Load the navigation component
+        fetch('components/navigation.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navigation-placeholder').innerHTML = data;
+            });
+            
+        // Hide spinner when everything is loaded
+        window.addEventListener('load', function() {
+            var spinner = document.getElementById('spinner-overlay');
+            if (spinner) spinner.style.opacity = 0;
+            setTimeout(function() {
+                if (spinner) spinner.style.display = 'none';
+            }, 400);
+        });
+    </script>
+</body>
+</html>
