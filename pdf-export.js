@@ -1,5 +1,5 @@
-// API base URL - can be overridden by environment variable if needed
-const API_BASE = window.REACT_APP_API_URL || "https://reproai-app.lemondune-e106e75a.westeurope.azurecontainerapps.io";
+// Load config first
+const API_BASE = window.AppConfig?.api?.baseUrl || 'http://localhost:8002';
 
 // DOM elements
 const downloadButton = document.getElementById('download-pdf');
@@ -38,7 +38,7 @@ async function downloadPdf(accessToken) {
         errorMessage.textContent = '';
         
         // Create the PDF URL
-        const pdfUrl = `${API_BASE}/api/dmp/enriched-checklists/access/${accessToken}/export-pdf`;
+        const pdfUrl = `${API_BASE}/dmp/enriched-checklists/access/${accessToken}/export-pdf`;
         
         // Open the PDF in a new tab
         window.open(pdfUrl, '_blank');

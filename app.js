@@ -1,5 +1,5 @@
-// API base URL - can be overridden by environment variable if needed
-const API_BASE = window.REACT_APP_API_URL || "https://reproai-app.lemondune-e106e75a.westeurope.azurecontainerapps.io";
+// API base URL - loaded from centralized config
+const API_BASE = window.AppConfig?.api?.baseUrl || 'http://localhost:8002';
 
 // Default parameters for analysis (will be overridden by dropdown selections)
 let selectedChecklistId = "finnish_dmp_evaluation";
@@ -16,8 +16,8 @@ let apiHealthy = false;
 function updateChecklistDownloadLink() {
     const downloadChecklistBtn = document.getElementById('download-checklist-btn');
     if (downloadChecklistBtn) {
-        // Update href attribute for the link
-        downloadChecklistBtn.setAttribute('href', `${API_BASE}/api/dmp/checklists/${selectedChecklistId}/export-pdf`);
+        // Update href attribute for the link using centralized config
+        downloadChecklistBtn.setAttribute('href', `${API_BASE}/dmp/checklists/${selectedChecklistId}/export-pdf`);
     }
 }
 

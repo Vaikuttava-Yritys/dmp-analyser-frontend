@@ -4,8 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DMP Analyser</title>
+    <!-- Load configuration first -->
+    <script src="js/config.js"></script>
+    <!-- Load API client -->
+    <script src="js/api.js"></script>
+    <!-- Load initialization script -->
+    <script src="js/init.js" defer></script>
+    <!-- Load main application logic -->
+    <script src="app.js" defer></script>
+    <!-- Styles -->
     <link rel="stylesheet" href="css/shared-styles.css">
-    <link rel="stylesheet" href="style.css">
+    <style>
+        #api-status {
+            margin: 10px 0;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        #api-status.connected {
+            color: green;
+        }
+        #api-status.disconnected {
+            color: red;
+        }
+    </style>
 </head>
 <body>
   <div id="spinner-overlay">
@@ -109,23 +131,41 @@
                 </span>
             </div>
     </div>
-    <script src="app.js"></script>
     <script>
-        // Load the navigation component
-        fetch('components/navigation.html')
+        // Check API status when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check API status and update UI
+            if (typeof checkApiHealth === 'function') {
+                checkApiHealth().then(isHealthy => {
+                    const statusElement = document.getElementById('api-status');
+                    if (statusElement) {
+                        if (isHealthy) {
+                            statusElement.textContent = '✅ API Connected';
+                            statusElement.className = 'connected';
+                        } else {
+                            statusElement.textContent = '❌ API Disconnected';
+                            statusElement.className = 'disconnected';
+                        }
+                    }
+                });
+            }
+            
+            // Load the navigation component
+            fetch('components/navigation.html')
             .then(response => response.text())
             .then(data => {
                 document.getElementById('navigation-placeholder').innerHTML = data;
             });
             
-        // Hide spinner when everything is loaded
-        window.addEventListener('load', function() {
-            var spinner = document.getElementById('spinner-overlay');
-            if (spinner) spinner.style.opacity = 0;
-            setTimeout(function() {
-                if (spinner) spinner.style.display = 'none';
-            }, 400);
-        });
+            // Hide spinner when everything is loaded
+            window.addEventListener('load', function() {
+                var spinner = document.getElementById('spinner-overlay');
+                if (spinner) spinner.style.opacity = 0;
+                setTimeout(function() {
+                    if (spinner) spinner.style.display = 'none';
+                }, 400);
+            });
+        }); // Close DOMContentLoaded
     </script>
 </body>
 </html>

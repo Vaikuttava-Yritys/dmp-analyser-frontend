@@ -71,13 +71,10 @@
         }, 400);
     });
 </script>
+<script src="js/config.js"></script>
 <script>
-// --- API Constants --- //
-// Local API endpoint
-// const API_BASE_URL = '/api/dmp';
-
-// Production API endpoint
-const API_BASE_URL = 'https://reproai-app.lemondune-e106e75a.westeurope.azurecontainerapps.io/api/dmp';
+// Use centralized config for API URL
+const API_BASE_URL = window.AppConfig.api.baseUrl + '/dmp';
 
 // --- Utility Functions --- //
 function getTokenFromUrl() {
@@ -631,14 +628,14 @@ function renderDomains(data, checklist) {
 function setupPdfExport(token) {
     const exportButton = document.getElementById('export-pdf');
     if (!exportButton) return;
-    
+
     exportButton.addEventListener('click', async () => {
         try {
             exportButton.disabled = true;
-            exportButton.textContent = 'Generating PDF...';
+            exportButton.innerHTML = '<span style="margin-right: 5px;">⏳</span> Generating PDF...';
             
-            // Use the PDF export endpoint with the access token
-            const pdfUrl = `${API_BASE_URL}/enriched-checklists/access/${encodeURIComponent(token)}/export-pdf`;
+            // Use centralized config for API URL
+            const pdfUrl = `${window.AppConfig.api.baseUrl}/api/dmp/enriched-checklists/access/${encodeURIComponent(token)}/export-pdf`;
             
             // Open in new tab instead of iframe for production API
             window.open(pdfUrl, '_blank');
@@ -669,7 +666,7 @@ function setupPdfExport(token) {
     
     try {
         // Fetch enriched checklist data using the access token
-        const response = await fetch(`${API_BASE_URL}/enriched-checklists/access/${encodeURIComponent(token)}`);
+        const response = await fetch(`${window.AppConfig.api.baseUrl}/api/dmp/enriched-checklists/access/${encodeURIComponent(token)}`);
         
         if (!response.ok) {
             throw new Error(`API returned ${response.status}: ${response.statusText}`);
@@ -689,7 +686,7 @@ function setupPdfExport(token) {
         let checklist = normalizedData.checklist || {};
         if (!checklist.sections && normalizedData.checklist_id) {
             try {
-                const checklistResponse = await fetch(`${API_BASE_URL}/checklists/${normalizedData.checklist_id}`);
+                const checklistResponse = await fetch(`${API_BASE_URL}/api/checklists/${normalizedData.checklist_id}`);
                 if (checklistResponse.ok) {
                     checklist = await checklistResponse.json();
                     // Add the checklist to the normalized data

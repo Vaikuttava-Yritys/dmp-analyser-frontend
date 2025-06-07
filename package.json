@@ -1,11 +1,11 @@
 {
-  "name": "dmp-analyser-frontend",
-  "version": "1.0.0",
-  "description": "DMP Analyser Frontend Application",
-  "scripts": {
-    "build": "echo 'No build step required for static site'"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "MIT"
-}
+    "name": "dmp-analyser-frontend",
+    "version": "1.0.0",
+    "description": "DMP Analyser Frontend Application",
+    "scripts": {
+      "build": "echo 'No build step required for static site'"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "CC BY-NC 4.0"
+  }
