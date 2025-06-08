@@ -2,36 +2,53 @@
  * Application Configuration
  * 
  * This file contains environment-specific configuration for the application.
- * In production, these values can be overridden by setting environment variables
- * or by replacing this file during the build process.
+ * In production, these values are automatically set based on the deployment environment.
+ * 
+ * IMPORTANT: When deploying to production, ensure this file is included in the build.
  */
 
 // Default configuration (development)
 const config = {
   // Environment
   env: 'development',
+  version: '1.0.0',
+  buildTime: new Date().toISOString(),
   
   // API Configuration
   api: {
     baseUrl: 'http://localhost:8002',
     endpoints: {
       health: '/health',
-      // Add other API endpoints here
-    }
+      analyze: '/api/dmp/enriched-checklists/analyze',
+      status: '/api/dmp/enriched-checklists/run/',
+      results: '/api/dmp/enriched-checklists/access/',
+      checklists: '/api/dmp/checklists/',
+    },
+    timeout: 30000, // 30 seconds
+    retries: 3
   },
   
   // UI Configuration
   ui: {
     debug: true,
-    // Add other UI-specific settings here
+    showApiStatus: true,
+    defaultChecklistId: 'finnish_dmp_evaluation'
   }
 };
 
+// Production environment detection
+const isProduction = () => {
+  return window.location.hostname !== 'localhost' && 
+         window.location.hostname !== '127.0.0.1' &&
+         !window.location.hostname.includes('ngrok.io');
+};
+
 // Production overrides
-if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+if (isProduction()) {
   config.env = 'production';
   config.api.baseUrl = 'https://reproai-app.lemondune-e106e75a.westeurope.azurecontainerapps.io';
   config.ui.debug = false;
+  config.ui.showApiStatus = false;
 }
 
 // Log configuration in development
