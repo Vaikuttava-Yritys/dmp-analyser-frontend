@@ -7,6 +7,9 @@
  * IMPORTANT: When deploying to production, ensure this file is included in the build.
  */
 
+// Toggle this flag to use production API in development mode
+const useProductionApi = true;
+
 // Default configuration (development)
 const config = {
   // Environment
@@ -16,7 +19,7 @@ const config = {
   
   // API Configuration
   api: {
-    baseUrl: 'http://localhost:8002',
+    baseUrl: useProductionApi ? 'https://reproai-app.lemondune-e106e75a.westeurope.azurecontainerapps.io' : 'http://localhost:8002',
     endpoints: {
       health: '/health',
       analyze: '/api/dmp/enriched-checklists/analyze',
