@@ -3,7 +3,8 @@
     "version": "1.0.0",
     "description": "DMP Analyser Frontend Application",
     "scripts": {
-      "build": "echo 'No build step required for static site'"
+      "build": "echo 'No build step required for static site'",
+      "start": "npx http-server -p 3001 -c-1"
     },
     "keywords": [],
     "author": "",

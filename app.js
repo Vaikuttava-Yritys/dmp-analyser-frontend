@@ -132,26 +132,28 @@ async function handleAnalysisSubmit(event) {
         }
     }
     
-    // Get text input
+    // Get the active tab
+    const textTabActive = document.getElementById('text-input-tab').classList.contains('active');
+    const fileTabActive = document.getElementById('file-upload-tab').classList.contains('active');
+    
+    // Get input values
     const textInput = document.getElementById('text-input').value.trim();
-    if (!textInput) {
+    const pdfFile = document.getElementById('pdf-file').files[0];
+    const userEmail = document.getElementById('user-email').value.trim();
+    
+    // Validate input based on active tab
+    if (textTabActive && !textInput) {
         alert('Please enter text to analyze');
+        return;
+    } else if (fileTabActive && !pdfFile) {
+        alert('Please select a PDF file to upload');
         return;
     }
     
-    // Process text input - try to parse as JSON if it looks like JSON
-    let processedText = textInput;
-    if ((textInput.startsWith('{') && textInput.endsWith('}')) || 
-        (textInput.startsWith('[') && textInput.endsWith(']'))) {
-        try {
-            // Try to parse and re-stringify to format it properly
-            const jsonObj = JSON.parse(textInput);
-            processedText = JSON.stringify(jsonObj, null, 2);
-            console.log('Input text was formatted as valid JSON');
-        } catch (e) {
-            console.log('Input text looks like JSON but is not valid:', e.message);
-            // Keep original text if parsing fails
-        }
+    // Validate email (now mandatory)
+    if (!userEmail) {
+        alert('Please enter your email address');
+        return;
     }
     
     // Show status section, hide other sections
@@ -160,27 +162,84 @@ async function handleAnalysisSubmit(event) {
     document.getElementById('analysis-result').style.display = 'none';
     
     try {
-        console.log('Submitting analysis with parameters:', {
-            checklist_id: selectedChecklistId,
-            config_id: selectedConfigId,
-            text_length: processedText.length
-        });
+        let response;
         
-        // Submit analysis request with selected parameters
-        const response = await fetch(`${API_BASE}/api/dmp/enriched-checklists/analyze`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            mode: 'cors', // Add explicit CORS mode
-            credentials: 'same-origin',
-            body: JSON.stringify({
+        if (pdfFile) {
+            // Handle PDF file upload
+            console.log('Submitting PDF file for analysis:', {
+                checklist_id: selectedChecklistId,
+                config_id: selectedConfigId,
+                file_name: pdfFile.name,
+                file_size: pdfFile.size,
+                user_email: userEmail || 'not provided'
+            });
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('pdf_file', pdfFile);
+            
+            // Build URL with query parameters
+            let uploadUrl = `${API_BASE}/api/dmp/enriched-checklists/upload-pdf?checklist_id=${encodeURIComponent(selectedChecklistId)}&config_id=${encodeURIComponent(selectedConfigId)}`;
+            
+            // Add user email if provided
+            if (userEmail) {
+                uploadUrl += `&user_email=${encodeURIComponent(userEmail)}`;
+            }
+            
+            // Submit PDF upload request
+            response = await fetch(uploadUrl, {
+                method: 'POST',
+                mode: 'cors',
+                credentials: 'same-origin',
+                body: formData
+            });
+        } else {
+            // Process text input - try to parse as JSON if it looks like JSON
+            let processedText = textInput;
+            if ((textInput.startsWith('{') && textInput.endsWith('}')) || 
+                (textInput.startsWith('[') && textInput.endsWith(']'))) {
+                try {
+                    // Try to parse and re-stringify to format it properly
+                    const jsonObj = JSON.parse(textInput);
+                    processedText = JSON.stringify(jsonObj, null, 2);
+                    console.log('Input text was formatted as valid JSON');
+                } catch (e) {
+                    console.log('Input text looks like JSON but is not valid:', e.message);
+                    // Keep original text if parsing fails
+                }
+            }
+            
+            console.log('Submitting text analysis with parameters:', {
+                checklist_id: selectedChecklistId,
+                config_id: selectedConfigId,
+                text_length: processedText.length,
+                user_email: userEmail || 'not provided'
+            });
+            
+            // Build request body
+            const requestBody = {
                 checklist_id: selectedChecklistId,
                 text: processedText,
                 config_id: selectedConfigId
-            })
-        });
+            };
+            
+            // Add user email if provided
+            if (userEmail) {
+                requestBody.user_email = userEmail;
+            }
+            
+            // Submit text analysis request
+            response = await fetch(`${API_BASE}/api/dmp/enriched-checklists/analyze`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                mode: 'cors',
+                credentials: 'same-origin',
+                body: JSON.stringify(requestBody)
+            });
+        }
         
         if (!response.ok) {
             throw new Error(`Failed to submit analysis: ${response.status}`);
@@ -190,8 +249,24 @@ async function handleAnalysisSubmit(event) {
         currentRunId = data.run_id;
         currentAccessToken = data.access_token;
         
-        // Start polling for analysis completion
-        pollAnalysisStatus();
+        // Update status message to inform user about email notification
+        document.getElementById('status-message').textContent = `Your DMP analysis has been submitted successfully! You will receive an email at ${userEmail} when the analysis is ready.`;
+        
+        // Add a button to return to the form
+        const statusContainer = document.getElementById('analysis-status');
+        
+        // Check if the return button already exists
+        if (!document.getElementById('return-to-form-btn')) {
+            const returnButton = document.createElement('button');
+            returnButton.id = 'return-to-form-btn';
+            returnButton.className = 'btn';
+            returnButton.textContent = 'Submit Another DMP';
+            returnButton.addEventListener('click', () => {
+                document.getElementById('analysis-form').style.display = 'block';
+                document.getElementById('analysis-status').style.display = 'none';
+            });
+            statusContainer.appendChild(returnButton);
+        }
         
     } catch (error) {
         document.getElementById('status-message').textContent = `Error: ${error.message}`;
@@ -208,79 +283,45 @@ async function handleAnalysisSubmit(event) {
     }
 }
 
-// Poll for analysis status
-async function pollAnalysisStatus() {
-    if (!currentRunId) return;
+// Function to handle the case when a user receives results via email and wants to view them
+function setupResultsViewing(accessToken) {
+    if (!accessToken) return;
     
-    try {
-        console.log('Polling for analysis status...');
-        // Try to fetch the analysis result
-        const response = await fetch(`${API_BASE}/api/dmp/enriched-checklists/run/${currentRunId}`, {
-            headers: {
-                'Accept': 'application/json'
-            },
-            mode: 'cors', // Add explicit CORS mode
-            credentials: 'same-origin'
+    // Set up the direct link to results
+    const resultsUrl = `results.html?token=${accessToken}`;
+    const resultsLink = document.getElementById('results-direct-link');
+    if (resultsLink) {
+        resultsLink.href = resultsUrl;
+    }
+    
+    // Set up the shareable link if elements exist
+    const shareableLink = document.getElementById('shareable-link');
+    if (shareableLink) {
+        const fullUrl = new URL(resultsUrl, window.location.origin).href;
+        shareableLink.value = fullUrl;
+        
+        // Set up copy button functionality
+        const copyButton = document.getElementById('copy-link-btn');
+        const copySuccessMessage = document.getElementById('copy-success-message');
+        
+        if (copyButton && copySuccessMessage) {
+            copyButton.addEventListener('click', () => {
+                shareableLink.select();
+                document.execCommand('copy');
+                copySuccessMessage.style.display = 'inline';
+                setTimeout(() => {
+                    copySuccessMessage.style.display = 'none';
+                }, 3000);
+            });
+        }
+    }
+    
+    // Set up view results button if it exists
+    const viewResultsButton = document.getElementById('view-results-btn');
+    if (viewResultsButton) {
+        viewResultsButton.addEventListener('click', () => {
+            window.location.href = resultsUrl;
         });
-        
-        const data = await response.json();
-        console.log('Poll response:', data);
-        
-        // Check if we got an error response
-        if (data.detail) {
-            // Still processing or error - continue polling
-            document.getElementById('status-message').textContent = 'Your DMP is being analyzed. This can take 2-5 minutes to complete...';
-            setTimeout(pollAnalysisStatus, 5000); // Poll every 5 seconds
-            return;
-        }
-        
-        // Check if we have enriched_data in the response
-        if (data.enriched_data) {
-            // Analysis is complete - show results
-            document.getElementById('status-message').textContent = 'Analysis complete!';
-            document.getElementById('analysis-status').style.display = 'none';
-            document.getElementById('analysis-result').style.display = 'block';
-            
-            // Store the access token for PDF export and results viewing
-            if (data.access_token) {
-                currentAccessToken = data.access_token;
-                
-                // Set up the direct link to results
-                const resultsUrl = `results.html?token=${currentAccessToken}`;
-                const resultsLink = document.getElementById('results-direct-link');
-                resultsLink.href = resultsUrl;
-                
-                // Set up the shareable link
-                const fullUrl = new URL(resultsUrl, window.location.origin).href;
-                const shareableLink = document.getElementById('shareable-link');
-                shareableLink.value = fullUrl;
-                
-                // Set up copy button functionality
-                const copyButton = document.getElementById('copy-link-btn');
-                const copySuccessMessage = document.getElementById('copy-success-message');
-                
-                copyButton.addEventListener('click', () => {
-                    shareableLink.select();
-                    document.execCommand('copy');
-                    copySuccessMessage.style.display = 'block';
-                    setTimeout(() => {
-                        copySuccessMessage.style.display = 'none';
-                    }, 3000);
-                });
-            }
-            
-            // Stop polling
-            return;
-        }
-        
-        // If we get here, we don't know the status - keep polling
-        setTimeout(pollAnalysisStatus, 5000);
-        
-    } catch (error) {
-        console.error('Error polling analysis status:', error);
-        document.getElementById('status-message').textContent = `Error checking analysis status: ${error.message}`;
-        // Keep polling anyway in case it's a temporary error
-        setTimeout(pollAnalysisStatus, 10000); // Try again in 10 seconds
     }
 }
 

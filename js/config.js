@@ -8,7 +8,7 @@
  */
 
 // Toggle this flag to use production API in development mode
-const useProductionApi = true;
+const useProductionApi = false;
 
 // Default configuration (development)
 const config = {
