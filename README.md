@@ -18,7 +18,7 @@ dmp/
 ├── index.html          # Main application page
 ├── about.html          # About page with project information
 ├── feedback.html       # User feedback submission form
-├── feedback_view.html  # View for displaying feedback results
+├── results.html        # View for displaying analysis results
 ├── export.html         # PDF export functionality
 ├── privacy.html        # Privacy policy page
 ├── app.js              # Main JavaScript application logic

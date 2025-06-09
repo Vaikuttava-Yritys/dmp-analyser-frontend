@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DMP Assessment Results</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/shared-styles.css">
+    <link rel="stylesheet" href="css/feedback-styles.css?v=1.1">
+    <link rel="stylesheet" href="css/tabs.css">
+</head>
+<body>
+    <div id="spinner-overlay">
+        <div class="spinner"></div>
+    </div>
+    <div class="container">
+        <!-- Include the navigation component -->
+        <div id="navigation-placeholder"></div>
+        <div class="feedback-prompt" style="text-align: right; margin-bottom: 10px;">
+            Please leave your <a href="feedback.html">feedback</a> on analysis results.
+        </div>
+        <h1 class="centered">DMP Assessment Results</h1>
+        <div id="loading" class="loading">Loading analysis...</div>
+        <div id="error" class="error" style="display:none;">
+            <p class="error-message"></p>
+            <div id="debug-info" style="display:none;"></div>
+        </div>
+        <div id="results" style="display:none;">
+            <!-- Tabs Navigation -->
+            <div class="tabs-container">
+                <ul class="tabs-nav" id="results-tabs">
+                    <li><button class="tab-button active" data-tab="summary-tab">Summary</button></li>
+                    <li><button class="tab-button" data-tab="domains-tab">Domain-level Results</button></li>
+                    <li><button class="tab-button" data-tab="detailed-tab">Detailed Results</button></li>
+                    <li><button class="tab-button" data-tab="feedback-tab">Feedback for Author</button></li>
+                    <li><button class="tab-button" data-tab="pdf-tab"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: text-bottom;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="15 15 12 18 9 15"></polyline></svg>PDF Export</button></li>
+                </ul>
+                
+                <!-- Tab Contents -->
+                
+                <!-- Summary Tab -->
+                <div id="summary-tab" class="tab-content active">
+                    <div class="tab-section">
+                        <div id="overall-assessment"></div>
+                    </div>
+                    
+                    <div class="tab-section">
+                        <div id="analysis-info"></div>
+                    </div>
+                </div>
+                
+                <!-- Domain-level Results Tab -->
+                <div id="domains-tab" class="tab-content">
+                    <div id="domain-summaries"></div>
+                </div>
+                
+                <!-- Detailed Results Tab -->
+                <div id="detailed-tab" class="tab-content">
+                    <div id="domains"></div>
+                </div>
+                
+                <!-- Feedback for Author Tab -->
+                <div id="feedback-tab" class="tab-content">
+                    <div id="feedback-note"></div>
+                </div>
+                
+                <!-- PDF Export Tab -->
+                <div id="pdf-tab" class="tab-content">
+                    <div class="pdf-export-container centered">
+                        <h3>PDF Report Export</h3>
+                        <p>The PDF report includes all the information from this assessment in a printable format:</p>
+                        <ul class="pdf-features">
+                            <li>Overall assessment and score</li>
+                            <li>Domain-level results with compliance indicators</li>
+                            <li>Detailed analysis of each domain</li>
+                            <li>Specific feedback for the author</li>
+                        </ul>
+                        <p>The report can be shared with collaborators or used for documentation purposes.</p>
+                        <button id="export-pdf" class="export-button pdf-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: text-bottom;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="15 15 12 18 9 15"></polyline></svg>
+                            Download PDF Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <div style="display: flex; align-items: center; gap: 10px; margin-top: 24px;">
+            <img src="img/Cc-by-nc_icon.png" alt="Creative Commons BY-NC" style="height: 36px; width: auto;">
+            <span style="font-size: 0.95em;">
+                This work is licensed under a 
+                <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC 4.0</a>.
+            </span>
+        </div>
+    </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+<script src="js/feedback-data.js?v=1.1"></script>
+<script src="js/feedback-render.js?v=1.1"></script>
+<script src="js/test-modules.js?v=1.1"></script>
+<script>
+    // Load the navigation component
+    fetch('components/navigation.html')
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('navigation-placeholder').innerHTML = data;
+        });
+        
+    // Hide spinner when everything is loaded
+    window.addEventListener('load', function() {
+        var spinner = document.getElementById('spinner-overlay');
+        if (spinner) spinner.style.opacity = 0;
+        setTimeout(function() {
+            if (spinner) spinner.style.display = 'none';
+        }, 400);
+    });
+    
+    // Tab functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.getAttribute('data-tab');
+                
+                // Remove active class from all buttons and contents
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                // Add active class to current button and content
+                button.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+                
+                // If this is the domains tab, ensure domain summaries are expanded
+                if (tabId === 'domains-tab') {
+                    // Wait for content to be rendered
+                    setTimeout(() => {
+                        // Find and disable the toggle button in domain summaries
+                        const toggleButton = document.querySelector('#domain-summaries-content').parentNode.querySelector('.toggle-button');
+                        if (toggleButton) {
+                            // Make sure content is visible
+                            const contentDiv = document.getElementById('domain-summaries-content');
+                            if (contentDiv) {
+                                contentDiv.style.display = 'block';
+                            }
+                            // Hide the toggle button
+                            toggleButton.style.display = 'none';
+                        }
+                    }, 100);
+                }
+            });
+        });
+        
+        // Ensure domain summaries are expanded on initial load
+        setTimeout(() => {
+            const domainSummariesContent = document.getElementById('domain-summaries-content');
+            if (domainSummariesContent) {
+                domainSummariesContent.style.display = 'block';
+                const toggleButton = domainSummariesContent.parentNode.querySelector('.toggle-button');
+                if (toggleButton) {
+                    toggleButton.style.display = 'none';
+                }
+            }
+        }, 500);
+    });
+</script>
+<script src="js/config.js"></script>
+<script>
+// Use centralized config for API URL
+const API_BASE_URL = window.AppConfig.api.baseUrl + '/dmp';
+
+// --- Utility Functions --- //
+function getTokenFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('token');
+}
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[&<>"']/g, function(tag) {
+        const chars = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+        return chars[tag] || tag;
+    });
+}
+function complianceClass(compliance) {
+    if (!compliance) return 'compliance-Unknown';
+    const c = compliance.toLowerCase();
+    if (c.includes('full')) return 'compliance-FullyMet';
+    if (c.includes('partial')) return 'compliance-PartiallyMet';
+    if (c.includes('not')) return 'compliance-NotMet';
+    return 'compliance-Unknown';
+}
+
+// --- Render Functions --- //
+function renderManuscriptMetadata(data) {
+    const container = document.getElementById('manuscript-metadata');
+    
+    // Get DMP metadata from summary or raw_outputs
+    const summary = data.summary || {};
+    let dmpMetadata = summary.dmp_metadata || {};
+    
+    // If not in summary, check raw_outputs as fallback
+    if (!dmpMetadata || Object.keys(dmpMetadata).length === 0) {
+        const rawOutputs = data.raw_outputs || {};
+        dmpMetadata = rawOutputs.dmp_metadata || {};
+    }
+    
+    // Get manuscript title from various possible locations
+    let manuscriptTitle = '';
+    if (dmpMetadata && dmpMetadata.title) {
+        manuscriptTitle = dmpMetadata.title;
+    } else if (data.title) {
+        manuscriptTitle = data.title;
+    } else if (data.manuscript_title) {
+        manuscriptTitle = data.manuscript_title;
+    } else {
+        manuscriptTitle = 'Untitled Manuscript';
+    }
+    
+    // Add manuscript title
+    const titleElem = document.createElement('h3');
+    titleElem.className = 'centered';
+    titleElem.textContent = manuscriptTitle;
+    container.appendChild(titleElem);
+    
+    // Add DMP metadata fields
+    if (dmpMetadata) {
+        // Add study design if available
+        if (dmpMetadata.design) {
+            const designElem = document.createElement('p');
+            designElem.className = 'centered';
+            designElem.textContent = `Study Design: ${dmpMetadata.design}`;
+            container.appendChild(designElem);
+        }
+        
+        // Add discipline if available
+        if (dmpMetadata.discipline) {
+            const disciplineElem = document.createElement('p');
+            disciplineElem.className = 'centered';
+            disciplineElem.textContent = `Discipline: ${dmpMetadata.discipline}`;
+            container.appendChild(disciplineElem);
+        }
+    }
+    
+    // Add authors if available
+    if (data.authors) {
+        const authorsElem = document.createElement('p');
+        let authorsText = '';
+        if (Array.isArray(data.authors)) {
+            authorsText = data.authors.join(', ');
+        } else {
+            authorsText = String(data.authors);
+        }
+        authorsElem.textContent = `Authors: ${authorsText}`;
+        container.appendChild(authorsElem);
+    }
+    
+    // Add DOI if available
+    if (data.doi) {
+        const doiElem = document.createElement('p');
+        let doiText = '';
+        if (typeof data.doi === 'object' && data.doi.$oid) {
+            doiText = data.doi.$oid;
+        } else {
+            doiText = String(data.doi);
+        }
+        doiElem.textContent = `DOI: ${doiText}`;
+        container.appendChild(doiElem);
+    }
+}
+
+function renderAnalysisInfo(data) {
+    const container = document.getElementById('analysis-info');
+    
+    // Check if we have enriched_data structure
+    const enrichedData = data.enriched_data || {};
+    
+    // Add analysis date if available
+    const createdAt = data.created_at;
+    // Try to get timestamp from different possible locations
+    let timestamp = enrichedData.timestamp || data.timestamp;
+    
+    if (timestamp) {
+        // Handle MongoDB date format if present
+        if (typeof timestamp === 'object' && timestamp.$date) {
+            timestamp = timestamp.$date;
+        }
+        const formattedDate = new Date(timestamp).toLocaleDateString();
+        const dateElem = document.createElement('p');
+        dateElem.className = 'metadata-item';
+        dateElem.textContent = `Analysis Date: ${formattedDate}`;
+        container.appendChild(dateElem);
+    } else if (createdAt) {
+        // Fallback to created_at
+        let dateStr = createdAt;
+        if (typeof createdAt === 'object' && createdAt.$date) {
+            dateStr = createdAt.$date;
+        }
+        const formattedDate = new Date(dateStr).toLocaleDateString();
+        const dateElem = document.createElement('p');
+        dateElem.className = 'metadata-item';
+        dateElem.textContent = `Analysis Date: ${formattedDate}`;
+        container.appendChild(dateElem);
+    }
+    
+    // Add run ID information
+    const runId = enrichedData.run_id || data.run_id;
+    if (runId) {
+        const runIdElem = document.createElement('p');
+        runIdElem.className = 'metadata-item';
+        runIdElem.textContent = `Analysis ID: ${runId}`;
+        container.appendChild(runIdElem);
+    } else if (data._id) {
+        // Fallback to _id
+        let idStr = data._id;
+        if (typeof data._id === 'object' && data._id.$oid) {
+            idStr = data._id.$oid;
+        }
+        const idElem = document.createElement('p');
+        idElem.className = 'metadata-item';
+        idElem.textContent = `Analysis ID: ${idStr}`;
+        container.appendChild(idElem);
+    }
+    
+    // Add configuration information
+    const configId = enrichedData.config_id || data.config_id;
+    if (configId) {
+        const configElem = document.createElement('p');
+        configElem.className = 'metadata-item';
+        configElem.textContent = `Configuration: ${configId}`;
+        container.appendChild(configElem);
+    }
+}
+
+function renderFeedbackNote(note) {
+    document.getElementById('feedback-note').innerHTML = note ? escapeHTML(note).replace(/\n/g, '<br>') : '<em>No feedback note found.</em>';
+}
+
+// --- PDF Export Function --- //
+function setupPdfExport(token) {
+    const exportButton = document.getElementById('export-pdf');
+    if (!exportButton) return;
+
+    exportButton.addEventListener('click', async () => {
+        try {
+            exportButton.disabled = true;
+            exportButton.innerHTML = '<span style="margin-right: 5px;">⏳</span> Generating PDF...';
+            
+            // Use centralized config for API URL
+            const pdfUrl = `${window.AppConfig.api.baseUrl}/api/dmp/enriched-checklists/access/${encodeURIComponent(token)}/export-pdf`;
+            
+            // Open in new tab instead of iframe for production API
+            window.open(pdfUrl, '_blank');
+            
+            // Reset button after a delay
+            setTimeout(() => {
+                exportButton.disabled = false;
+                exportButton.innerHTML = '<span style="margin-right: 5px;">📄</span> Download PDF Report';
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to export PDF:', err);
+            exportButton.disabled = false;
+            exportButton.innerHTML = '<span style="margin-right: 5px;">📄</span> Download PDF Report';
+            alert('Failed to generate PDF. Please try again.');
+        }
+    });
+}
+
+// --- Main Logic --- //
+(async function() {
+    const token = getTokenFromUrl();
+    if (!token) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').querySelector('.error-message').textContent = 'No token provided in URL.';
+        return;
+    }
+    
+    try {
+        // Fetch enriched checklist data using the access token
+        const response = await fetch(`${window.AppConfig.api.baseUrl}/api/dmp/enriched-checklists/access/${encodeURIComponent(token)}`);
+        
+        if (!response.ok) {
+            throw new Error(`API returned ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Fetched data:', data);
+        
+        // For debugging
+        const debugInfo = document.getElementById('debug-info');
+        debugInfo.textContent = JSON.stringify(data, null, 2).substring(0, 1000) + '...';
+        
+        // Normalize the data structure
+        const normalizedData = FeedbackData.normalizeData(data);
+        
+        // Fetch base checklist data if needed for additional context
+        let checklist = normalizedData.checklist || {};
+        if (!checklist.sections && normalizedData.checklist_id) {
+            try {
+                const checklistResponse = await fetch(`${API_BASE_URL}/api/checklists/${normalizedData.checklist_id}`);
+                if (checklistResponse.ok) {
+                    checklist = await checklistResponse.json();
+                    // Add the checklist to the normalized data
+                    normalizedData.checklist = checklist;
+                }
+            } catch (checklistErr) {
+                console.warn('Failed to fetch base checklist:', checklistErr);
+            }
+        }
+        
+        // Hide loading, show results
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('results').style.display = 'block';
+        
+        // Render all sections using our modular render functions
+        try {
+            // Use FeedbackRender functions for all sections
+            console.log('Rendering overall assessment...');
+            FeedbackRender.renderOverallAssessment(normalizedData);
+            
+            console.log('Rendering analysis info (with manuscript metadata)...');
+            FeedbackRender.renderAnalysisInfo(normalizedData);
+        } catch (renderError) {
+            console.error('Error during section rendering:', renderError);
+        }
+        
+        // Get feedback note from the data
+        const feedbackNote = FeedbackData.safeGet(normalizedData, 'summary.feedback_note') || 
+                            FeedbackData.safeGet(normalizedData, 'feedback_note');
+        FeedbackRender.renderFeedbackNote(feedbackNote);
+        
+        // Render domain summaries and detailed domain analysis
+        FeedbackRender.renderDomainSummaries(normalizedData);
+        FeedbackRender.renderDomains(normalizedData, checklist);
+        
+        // Setup PDF export functionality
+        setupPdfExport(token);
+        
+        // Update tab indicators based on results
+        updateTabIndicators(normalizedData);
+        
+    } catch (err) {
+        console.error('Error loading analysis:', err);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').querySelector('.error-message').textContent = `Failed to load analysis: ${err.message}`;
+        document.getElementById('debug-info').style.display = 'block';
+    }
+})();
+
+// Function to update tab indicators based on domain results
+function updateTabIndicators(data) {
+    // Get overall assessment classification
+    let overallClassification = '';
+    if (data.summary && data.summary.overall_classification) {
+        overallClassification = data.summary.overall_classification.toLowerCase();
+    }
+    
+    // Add indicator to domains tab
+    const domainsTab = document.querySelector('[data-tab="domains-tab"]');
+    if (domainsTab && overallClassification) {
+        const indicator = document.createElement('span');
+        indicator.className = `tab-indicator ${overallClassification}`;
+        domainsTab.appendChild(indicator);
+    }
+    
+    // Check if feedback exists and add indicator to feedback tab
+    const feedbackNote = FeedbackData.safeGet(data, 'summary.feedback_note') || 
+                        FeedbackData.safeGet(data, 'feedback_note');
+    if (feedbackNote) {
+        const feedbackTab = document.querySelector('[data-tab="feedback-tab"]');
+        if (feedbackTab) {
+            const indicator = document.createElement('span');
+            indicator.className = 'tab-indicator';
+            indicator.style.backgroundColor = '#3399cc';
+            feedbackTab.appendChild(indicator);
+        }
+    }
+}
+</script>
+</body>
+</html>

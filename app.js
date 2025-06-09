@@ -246,7 +246,7 @@ async function pollAnalysisStatus() {
                 currentAccessToken = data.access_token;
                 
                 // Set up the direct link to results
-                const resultsUrl = `feedback_view.html?token=${currentAccessToken}`;
+                const resultsUrl = `results.html?token=${currentAccessToken}`;
                 const resultsLink = document.getElementById('results-direct-link');
                 resultsLink.href = resultsUrl;
                 
@@ -292,9 +292,9 @@ async function handleViewResults() {
     }
     
     try {
-        // Navigate to the feedback view page with the access token
-        const feedbackViewUrl = `feedback_view.html?token=${currentAccessToken}`;
-        window.open(feedbackViewUrl, '_blank');
+        // Navigate to the results page with the access token
+        const resultsUrl = `results.html?token=${currentAccessToken}`;
+        window.open(resultsUrl, '_blank');
     } catch (error) {
         console.error('Error viewing results:', error);
         document.getElementById('status-message').textContent = `Error viewing results: ${error.message}`;

@@ -9,7 +9,7 @@ The DMP Analyser is a web application that analyzes Data Management Plans (DMPs)
 ```
 dmp-analyser-frontend/
 ├── index.html              # Main entry page with analysis form
-├── feedback_view.html      # Results view page
+├── results.html             # Results view page
 ├── app.js                  # Main application logic
 ├── pdf-export.js           # PDF export functionality
 ├── js/
@@ -51,7 +51,7 @@ All endpoints include the `/api` prefix:
    - Loading spinner
    - Configuration selection dropdowns
 
-2. **feedback_view.html**: Results page with:
+2. **results.html**: Results page with:
    - Analysis results display
    - PDF export functionality
    - Detailed feedback sections
@@ -69,7 +69,7 @@ All endpoints include the `/api` prefix:
    - Application polls for completion using the returned `run_id`
 
 3. **Results Viewing**:
-   - User is redirected to `feedback_view.html?token={accessToken}`
+   - User is redirected to `results.html?token={accessToken}`
    - Results are fetched and displayed
    - PDF export option is available
 

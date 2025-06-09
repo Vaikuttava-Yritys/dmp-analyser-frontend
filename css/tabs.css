@@ -1,0 +1,203 @@
+/* Tabs Container */
+.tabs-container {
+    width: 100%;
+    margin: 20px 0;
+}
+
+/* Tab Navigation */
+.tabs-nav {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-bottom: 2px solid #3399cc;
+    overflow-x: auto;
+}
+
+.tabs-nav li {
+    margin: 0;
+    padding: 0;
+}
+
+.tabs-nav button {
+    padding: 12px 20px;
+    background: #f1f5fb;
+    border: none;
+    border-radius: 6px 6px 0 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.tabs-nav button:hover {
+    background: #e1e9f5;
+}
+
+.tabs-nav button.active {
+    background: #3399cc;
+    color: white;
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+    padding: 20px;
+    background: #fff;
+    border-radius: 0 0 6px 6px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .tabs-nav {
+        flex-wrap: wrap;
+    }
+    
+    .tabs-nav button {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+}
+
+/* Tab indicators */
+.tab-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-left: 8px;
+}
+
+.tab-indicator.excellent {
+    background-color: #4CAF50;
+}
+
+.tab-indicator.satisfactory {
+    background-color: #FF9800;
+}
+
+.tab-indicator.poor {
+    background-color: #F44336;
+}
+
+/* PDF Export tab styles */
+#pdf-tab .pdf-export-container {
+    padding: 30px;
+    text-align: center;
+}
+
+#pdf-tab .pdf-features {
+    display: inline-block;
+    text-align: left;
+    margin: 20px auto;
+    padding: 15px 30px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    list-style-type: none;
+}
+
+#pdf-tab .pdf-features li {
+    margin: 10px 0;
+    padding-left: 25px;
+    position: relative;
+}
+
+#pdf-tab .pdf-features li:before {
+    content: '✓';
+    color: #3399cc;
+    position: absolute;
+    left: 0;
+    font-weight: bold;
+}
+
+#pdf-tab .export-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px;
+    background-color: #3399cc;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 20px;
+}
+
+#pdf-tab .export-button:hover {
+    background-color: #2980b9;
+}
+
+#pdf-tab .export-button:active {
+    background-color: #1f6da8;
+}
+
+/* Tab content sections */
+.tab-section {
+    margin-bottom: 30px;
+}
+
+.tab-section h3 {
+    margin-top: 0;
+}
+
+/* Hide section headers in tabs */
+.tab-content .section-header-container h2.section-header {
+    margin-top: 0;
+}
+
+/* Always show content in domain summaries */
+#domain-summaries-content {
+    display: block !important;
+}
+
+/* Hide toggle buttons in tabs */
+.tab-content .toggle-button {
+    display: none;
+}
+
+/* Quick navigation within tabs */
+.tab-quick-nav {
+    background: #f9f9fb;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.tab-quick-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.tab-quick-nav a {
+    display: inline-block;
+    padding: 5px 10px;
+    background: #e1e9f5;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #3399cc;
+    font-size: 14px;
+}
+
+.tab-quick-nav a:hover {
+    background: #d1d9e5;
+}
