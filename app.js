@@ -61,6 +61,12 @@ function resetFormToDefaultState() {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    // Show the form immediately so users know they can interact with it
+    const analysisForm = document.getElementById('analysis-form');
+    if (analysisForm) {
+        analysisForm.style.display = 'block';
+    }
+    
     // Check API health first
     checkApiHealth();
     
