@@ -326,6 +326,7 @@ function renderDomainSummaries(data) {
         const thead = document.createElement('thead');
         const headerRow = document.createElement('tr');
         
+        // Headers without feedback column
         const headers = ['Domain', 'Result', 'Evidence', 'Recommendations'];
         headers.forEach(headerText => {
             const th = document.createElement('th');
@@ -344,6 +345,7 @@ function renderDomainSummaries(data) {
             if (!domain.domain_id) return;
             
             const row = document.createElement('tr');
+            row.dataset.domainId = domain.domain_id;
             
             // Domain title with ID
             const domainCell = document.createElement('td');
@@ -384,13 +386,24 @@ function renderDomainSummaries(data) {
             recoCell.textContent = domain.summary?.recommendations || '-';
             row.appendChild(recoCell);
             
+            // First add the domain row to the tbody
             tbody.appendChild(row);
+            
+            // Then add feedback UI for this domain (after the row is in the DOM)
+            if (typeof ResultsFeedback !== 'undefined') {
+                ResultsFeedback.addDomainFeedbackUI(row, domain, tbody);
+            }
         });
         
         table.appendChild(tbody);
         tableContainer.appendChild(table);
         contentDiv.appendChild(tableContainer);
     });
+    
+    // Add overall feedback UI at the end
+    if (typeof ResultsFeedback !== 'undefined') {
+        ResultsFeedback.addOverallFeedbackUI(contentDiv);
+    }
 }
 
 // Render domains and items section

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="css/shared-styles.css">
     <link rel="stylesheet" href="css/feedback-styles.css?v=1.1">
     <link rel="stylesheet" href="css/tabs.css">
+    <link rel="stylesheet" href="css/results-feedback.css?v=1.0">
 </head>
 <body>
     <div id="spinner-overlay">
@@ -93,8 +94,10 @@
         </div>
     </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
-<script src="js/feedback-data.js?v=1.1"></script>
-<script src="js/feedback-render.js?v=1.1"></script>
+<script src="js/config.js"></script>
+<script src="js/feedback-data.js"></script>
+<script src="js/feedback-render.js"></script>
+<script src="js/results-feedback.js"></script>
 <script src="js/test-modules.js?v=1.1"></script>
 <script>
     // Load the navigation component
@@ -438,6 +441,11 @@ function setupPdfExport(token) {
         
         // Update tab indicators based on results
         updateTabIndicators(normalizedData);
+        
+        // Initialize feedback functionality if available
+        if (typeof ResultsFeedback !== 'undefined') {
+            ResultsFeedback.init(token);
+        }
         
     } catch (err) {
         console.error('Error loading analysis:', err);

@@ -19,13 +19,15 @@ const config = {
   
   // API Configuration
   api: {
-    baseUrl: useProductionApi ? 'https://reproai-app.lemondune-e106e75a.westeurope.azurecontainerapps.io' : 'http://localhost:8002',
+    baseUrl: useProductionApi ? 'https://reproai-app.lemondune-e106e75a.westeurope.azurecontainerapps.io' : 'http://localhost:8080',
     endpoints: {
       health: '/health',
       analyze: '/api/dmp/enriched-checklists/analyze',
       status: '/api/dmp/enriched-checklists/run/',
-      results: '/api/dmp/enriched-checklists/access/',
-      checklists: '/api/dmp/checklists/',
+      results: '/api/dmp/enriched-checklists/results/',
+      checklists: '/api/dmp/checklists',
+      feedback: '/api/dmp/feedback',
+      resultsFeedback: '/api/dmp/results-feedback'
     },
     timeout: 30000, // 30 seconds
     retries: 3

@@ -145,47 +145,57 @@
             background-color: #5a6268;
         }
         
-        /* Tabs styling */
+        /* Simplified Tabs styling */
         .input-method-tabs {
             margin-bottom: 20px;
         }
         
         .tab-buttons {
             display: flex;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #ddd;
+            margin-bottom: 0;
+            border-bottom: 1px solid #dee2e6;
+            width: 100%;
         }
         
         .tab-button {
-            padding: 10px 20px;
-            background-color: #f8f9fa;
-            border: 1px solid #ddd;
-            border-bottom: none;
-            border-radius: 5px 5px 0 0;
-            margin-right: 5px;
+            padding: 12px 24px;
+            background-color: #f5f5f5;
+            border: none;
+            margin-right: 2px;
             cursor: pointer;
-            font-weight: 500;
+            font-weight: 400;
             transition: all 0.2s ease;
+            border-radius: 4px 4px 0 0;
+            color: #6c757d;
+            position: relative;
+            outline: none;
+            text-align: left;
+            width: auto;
         }
         
         .tab-button:hover {
-            background-color: #e9ecef;
+            background-color: #f8f9fa;
+            color: #495057;
         }
         
         .tab-button.active {
-            background-color: #fff;
-            border-bottom: 2px solid #fff;
+            background-color: #ffffff;
+            color: #495057;
+            font-weight: 600;
+            border-bottom: 2px solid #6c757d;
             margin-bottom: -1px;
-            color: #007bff;
+        }
+        
+        .tab-content {
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            background-color: #fff;
         }
         
         .tab-pane {
             display: none;
-            padding: 15px;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-top: none;
-            border-radius: 0 0 5px 5px;
+            padding: 20px;
         }
         
         .tab-pane.active {
@@ -218,22 +228,23 @@
             <form id="dmp-form">
                 <div class="input-method-tabs">
                     <div class="tab-buttons">
-                        <button type="button" class="tab-button" data-tab="text-input-tab">Text Input</button>
-                        <button type="button" class="tab-button active" data-tab="file-upload-tab">File Upload</button>
+                        <button type="button" class="tab-button" data-tab="file-upload-tab" id="file-tab-btn">Upload PDF</button>
+                        <button type="button" class="tab-button" data-tab="text-input-tab" id="text-tab-btn">Enter Text</button>
                     </div>
                     
                     <div class="tab-content">
-                        <div id="text-input-tab" class="tab-pane">
-                            <div class="form-group">
-                                <label for="text-input">DMP Text:</label>
-                                <textarea id="text-input" rows="10" placeholder="Paste your DMP text here"></textarea>
+                        <div id="file-upload-tab" class="tab-pane active">
+                            <div class="form-group file-upload">
+                                <label for="pdf-file">Upload your DMP document (PDF format):</label>
+                                <input type="file" id="pdf-file" accept=".pdf" />
+                                <small class="form-text">Maximum file size: 10MB</small>
                             </div>
                         </div>
                         
-                        <div id="file-upload-tab" class="tab-pane active">
-                            <div class="form-group file-upload">
-                                <label for="pdf-file">DMP File (PDF):</label>
-                                <input type="file" id="pdf-file" accept=".pdf" />
+                        <div id="text-input-tab" class="tab-pane">
+                            <div class="form-group">
+                                <label for="text-input">Enter your DMP text:</label>
+                                <textarea id="text-input" rows="10" placeholder="Copy and paste your DMP text here"></textarea>
                             </div>
                         </div>
                     </div>
@@ -343,6 +354,36 @@
             .then(response => response.text())
             .then(data => {
                 document.getElementById('navigation-placeholder').innerHTML = data;
+            });
+            
+            // Tab functionality
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+            
+            // Set initial active tab
+            document.getElementById('file-tab-btn').classList.add('active');
+            
+            // Add click event listeners to tab buttons
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove active class from all buttons and panes
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabPanes.forEach(pane => pane.classList.remove('active'));
+                    
+                    // Add active class to clicked button
+                    button.classList.add('active');
+                    
+                    // Show corresponding tab pane
+                    const tabId = button.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    // Clear inputs when switching tabs
+                    if (tabId === 'text-input-tab') {
+                        document.getElementById('pdf-file').value = '';
+                    } else if (tabId === 'file-upload-tab') {
+                        document.getElementById('text-input').value = '';
+                    }
+                });
             });
             
             // Hide spinner when everything is loaded
