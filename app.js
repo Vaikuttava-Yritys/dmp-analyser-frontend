@@ -21,6 +21,44 @@ function updateChecklistDownloadLink() {
     }
 }
 
+/**
+ * Reset the form to its default state, clearing any custom elements
+ * that aren't automatically reset by form.reset()
+ */
+function resetFormToDefaultState() {
+    // Reset file input (which isn't cleared by form.reset)
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+        // Clear the file input value
+        input.value = '';
+        
+        // Clear any displayed filename
+        const filenameDisplay = document.querySelector('.file-name');
+        if (filenameDisplay) {
+            filenameDisplay.textContent = '';
+        }
+    });
+    
+    // Reset any custom tabs to default state
+    const tabs = document.querySelectorAll('.tab-button');
+    if (tabs.length > 0) {
+        // Activate the first tab
+        tabs.forEach(tab => tab.classList.remove('active'));
+        tabs[0].classList.add('active');
+        
+        // Show the first tab content, hide others
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabContents.forEach(content => content.style.display = 'none');
+        if (tabContents[0]) {
+            tabContents[0].style.display = 'block';
+        }
+    }
+    
+    // Clear any validation messages
+    const validationMessages = document.querySelectorAll('.validation-message');
+    validationMessages.forEach(message => message.textContent = '');
+}
+
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     // Check API health first
@@ -260,10 +298,17 @@ async function handleAnalysisSubmit(event) {
             const returnButton = document.createElement('button');
             returnButton.id = 'return-to-form-btn';
             returnButton.className = 'btn';
-            returnButton.textContent = 'Submit Another DMP';
+            returnButton.textContent = 'Submit another';
             returnButton.addEventListener('click', () => {
+                // Show the form and hide the status
                 document.getElementById('analysis-form').style.display = 'block';
                 document.getElementById('analysis-status').style.display = 'none';
+                
+                // Reset the form to default state
+                document.getElementById('analysis-form').reset();
+                
+                // Reset any custom form elements that aren't cleared by form.reset()
+                resetFormToDefaultState();
             });
             statusContainer.appendChild(returnButton);
         }

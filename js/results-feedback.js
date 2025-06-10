@@ -80,10 +80,13 @@ const ResultsFeedback = (function() {
         yesButton.className = 'toggle-btn yes-btn';
         yesButton.textContent = 'Yes';
         yesButton.addEventListener('click', () => {
-            setDomainAccuracyFeedback(domain.domain_id, 'yes');
+            // Remove active class from all buttons
             yesButton.classList.add('active');
             notUsefulButton.classList.remove('active');
             noButton.classList.remove('active');
+            
+            // Set accuracy feedback in memory but don't save to server
+            setDomainAccuracyFeedback(domain.domain_id, 'yes');
         });
         
         // Create Not Useful button
@@ -91,10 +94,13 @@ const ResultsFeedback = (function() {
         notUsefulButton.className = 'toggle-btn not-useful-btn';
         notUsefulButton.textContent = 'Not useful';
         notUsefulButton.addEventListener('click', () => {
-            setDomainAccuracyFeedback(domain.domain_id, 'not_useful');
-            notUsefulButton.classList.add('active');
+            // Remove active class from all buttons
             yesButton.classList.remove('active');
+            notUsefulButton.classList.add('active');
             noButton.classList.remove('active');
+            
+            // Set accuracy feedback in memory but don't save to server
+            setDomainAccuracyFeedback(domain.domain_id, 'not_useful');
         });
         
         // Create No button
@@ -102,10 +108,13 @@ const ResultsFeedback = (function() {
         noButton.className = 'toggle-btn no-btn';
         noButton.textContent = 'No';
         noButton.addEventListener('click', () => {
-            setDomainAccuracyFeedback(domain.domain_id, 'no');
-            noButton.classList.add('active');
+            // Remove active class from all buttons
             yesButton.classList.remove('active');
             notUsefulButton.classList.remove('active');
+            noButton.classList.add('active');
+            
+            // Set accuracy feedback in memory but don't save to server
+            setDomainAccuracyFeedback(domain.domain_id, 'no');
         });
         
         // Add buttons to container
@@ -114,17 +123,14 @@ const ResultsFeedback = (function() {
         toggleContainer.appendChild(noButton);
         accuracyContainer.appendChild(toggleContainer);
         
-        // Create comment input container
+        // Create comment input container with everything on one row
         const commentContainer = document.createElement('div');
-        commentContainer.className = 'comment-container';
+        commentContainer.className = 'comment-input-row';
         
         const commentLabel = document.createElement('label');
         commentLabel.textContent = 'Comment (optional):';
+        commentLabel.className = 'comment-label';
         commentContainer.appendChild(commentLabel);
-        
-        // Create comment input and submit button row
-        const inputRow = document.createElement('div');
-        inputRow.className = 'comment-input-row';
         
         const commentInput = document.createElement('input');
         commentInput.type = 'text';
@@ -134,26 +140,23 @@ const ResultsFeedback = (function() {
         commentInput.addEventListener('input', (e) => {
             setDomainCommentFeedback(domain.domain_id, e.target.value);
         });
-        inputRow.appendChild(commentInput);
+        commentContainer.appendChild(commentInput);
         
         // Create submit button inline with comment input
         const submitButton = document.createElement('button');
         submitButton.className = 'inline-submit-btn';
-        submitButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
-        submitButton.title = 'Submit Feedback';
+        submitButton.textContent = 'Submit';
         submitButton.addEventListener('click', () => {
             // Save feedback for this specific domain
             saveDomainFeedback(domain.domain_id);
         });
-        inputRow.appendChild(submitButton);
+        commentContainer.appendChild(submitButton);
         
         // Add status indicator
         const statusIndicator = document.createElement('span');
         statusIndicator.className = 'feedback-status';
         statusIndicator.id = `domain-${domain.domain_id}-feedback-status`;
-        inputRow.appendChild(statusIndicator);
-        
-        commentContainer.appendChild(inputRow);
+        commentContainer.appendChild(statusIndicator);
         
         // Add to feedback container
         feedbackContainer.appendChild(accuracyContainer);
