@@ -20,8 +20,16 @@ const FeedbackAPI = (function() {
      * @param {string} runId - The ID of the analysis run (token)
      */
     function init(runId) {
+        if (!runId) {
+            // Try to get run ID from window.token as fallback
+            if (window.token) {
+                runId = window.token;
+            } else if (window.runId) {
+                runId = window.runId;
+            }
+        }
+        
         feedbackData.runId = runId;
-        console.log('Feedback API initialized for run:', runId);
     }
 
     /**
@@ -94,6 +102,20 @@ const FeedbackAPI = (function() {
                 return Promise.resolve(false);
             }
             
+            // Check for runId before proceeding
+            if (!feedbackData.runId) {
+                // Try to recover using window.token or window.runId
+                if (window.token) {
+                    feedbackData.runId = window.token;
+                } else if (window.runId) {
+                    feedbackData.runId = window.runId;
+                } else {
+                    statusElement.textContent = 'Error: No run ID';
+                    statusElement.className = 'feedback-status error';
+                    return Promise.reject(new Error('No run ID available for feedback submission'));
+                }
+            }
+            
             // Prepare feedback data for submission
             const feedbackPayload = {
                 run_id: feedbackData.runId,
@@ -101,8 +123,6 @@ const FeedbackAPI = (function() {
                 id: id,
                 feedback: feedbackItem
             };
-            
-            console.log(`Sending ${type} feedback:`, id, feedbackItem);
             
             // Send feedback to API with timeout handling
             const controller = new AbortController();
@@ -216,16 +236,26 @@ const FeedbackAPI = (function() {
                 return Promise.resolve(false);
             }
             
+            // Check for runId before proceeding
+            if (!feedbackData.runId) {
+                // Try to recover using window.token or window.runId
+                if (window.token) {
+                    feedbackData.runId = window.token;
+                } else if (window.runId) {
+                    feedbackData.runId = window.runId;
+                } else {
+                    statusElement.textContent = 'Error: No run ID';
+                    statusElement.className = 'feedback-status error';
+                    return Promise.reject(new Error('No run ID available for overall feedback submission'));
+                }
+            }
+            
             // Prepare feedback data for submission
             const feedbackPayload = {
                 run_id: feedbackData.runId,
                 feedback_type: 'overall',
                 feedback: feedbackData.overallFeedback
             };
-            
-            console.log('Sending overall feedback with payload:', feedbackPayload);
-            
-            console.log('Sending overall feedback:', feedbackData.overallFeedback);
             
             // Send feedback to API with timeout handling
             const controller = new AbortController();
@@ -280,14 +310,23 @@ const FeedbackAPI = (function() {
                 statusElement.textContent = '';
                 statusElement.className = 'feedback-status';
             }, 5000);
-            
+
             return Promise.reject(error);
         }
+    }
+
+    /**
+     * Check if the module has been initialized
+     * @returns {boolean} True if initialized, false otherwise
+     */
+    function isInitialized() {
+        return !!feedbackData.runId;
     }
 
     // Public API
     return {
         init,
+        isInitialized,
         setAccuracyFeedback,
         setCommentFeedback,
         saveFeedback,

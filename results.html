@@ -147,9 +147,18 @@
         // Store token globally for consistent access
         window.token = token;
         
+        // Use the global runId if available, otherwise use token
+        const runIdToUse = window.runId || token;
+        
         if (window.ResultsFeedback) {
-            // Initialize ResultsFeedback with the token
-            window.ResultsFeedback.init(token);
+            // Check if ResultsFeedback is already initialized
+            if (window.ResultsFeedback.isInitialized && window.ResultsFeedback.isInitialized()) {
+                callback();
+                return;
+            }
+            
+            // Initialize ResultsFeedback with the runId
+            window.ResultsFeedback.init(runIdToUse);
             callback();
             return;
         }
@@ -157,7 +166,14 @@
         // If ResultsFeedback is not available, wait a bit and try again
         setTimeout(function() {
             if (window.ResultsFeedback) {
-                window.ResultsFeedback.init(token);
+                // Check if ResultsFeedback is already initialized
+                if (window.ResultsFeedback.isInitialized && window.ResultsFeedback.isInitialized()) {
+                    callback();
+                    return;
+                }
+                
+                // Initialize ResultsFeedback with the runId
+                window.ResultsFeedback.init(runIdToUse);
                 callback();
             }
         }, 500);
@@ -503,10 +519,21 @@ function setupPdfExport(token) {
         // Normalize the data structure
         const normalizedData = FeedbackData.normalizeData(data);
         
-        // Initialize feedback system with the token
+        // Get the run_id from the data - it's nested in enriched_data
+        // Extract run_id with fallbacks
+        const runId = (data.enriched_data && data.enriched_data.run_id) || 
+                      (normalizedData.enriched_data && normalizedData.enriched_data.run_id) ||
+                      normalizedData.run_id || 
+                      data.run_id || 
+                      token;
+        
+        // Store the run_id globally for access by all modules
+        window.runId = runId;
+        
+        // Initialize feedback system with the run_id
         if (typeof ResultsFeedback !== 'undefined' && typeof FeedbackAPI !== 'undefined') {
-            ResultsFeedback.init(token);
-            console.log('ResultsFeedback initialized successfully');
+            ResultsFeedback.init(runId);
+            console.log('ResultsFeedback initialized successfully with run_id:', runId);
         } else {
             console.error('ResultsFeedback or FeedbackAPI is not defined! Cannot initialize feedback system.');
         }

@@ -13,18 +13,34 @@ const ResultsFeedback = (function() {
     
     /**
      * Initialize feedback functionality
-     * @param {string} runId - The ID of the analysis run (token)
+     * @param {string} runId - The ID of the analysis run
      */
     function init(runId) {
-        // Store the runId in the local feedbackData object
-        feedbackData.runId = runId;
-        
-        // Initialize the feedback API
-        if (typeof FeedbackAPI !== 'undefined') {
-            FeedbackAPI.init(runId);
+        // Check if already initialized with a valid runId
+        if (feedbackData.runId) {
+            return;
         }
         
-        console.log('ResultsFeedback initialized with run ID:', runId);
+        // Try to recover runId if not provided
+        if (!runId) {
+            // Try to get run ID from window.runId or window.token as fallback
+            if (window.runId) {
+                runId = window.runId;
+            } else if (window.token) {
+                runId = window.token;
+            }
+        }
+        
+        // Store run ID in feedback data and globally
+        feedbackData.runId = runId;
+        window.runId = runId; // Ensure global consistency
+        
+        // Initialize FeedbackAPI
+        if (typeof FeedbackAPI !== 'undefined') {
+            FeedbackAPI.init(runId);
+        } else {
+            console.error('FeedbackAPI is not defined! Cannot initialize feedback API.');
+        }
     }
     
     /**
@@ -87,12 +103,27 @@ const ResultsFeedback = (function() {
             // Make sure we have a runId
             if (!feedbackData.runId) {
                 console.error('No runId available for feedback submission');
-                if (statusIndicator) {
-                    statusIndicator.textContent = 'Error: No run ID';
-                    statusIndicator.className = 'feedback-status error';
+                console.error('feedbackData:', feedbackData);
+                console.error('window.token:', window.token);
+                
+                // Try to recover using window.token
+                if (window.token) {
+                    console.log('Attempting to recover using window.token');
+                    feedbackData.runId = window.token;
+                    console.log('Updated runId to:', feedbackData.runId);
                 }
-                return;
+                
+                // If still no runId, show error
+                if (!feedbackData.runId) {
+                    if (statusIndicator) {
+                        statusIndicator.textContent = 'Error: No run ID';
+                        statusIndicator.className = 'feedback-status error';
+                    }
+                    return;
+                }
             }
+            
+            console.log('Using runId for feedback submission:', feedbackData.runId);
             
             // Use the correct FeedbackAPI method with proper parameters
             FeedbackAPI.setAccuracyFeedback(elementId, isDomain ? 'domain' : 'item', feedback.accuracy);
@@ -536,9 +567,22 @@ const ResultsFeedback = (function() {
             // Make sure we have a runId
             if (!feedbackData.runId) {
                 console.error('No runId available for overall feedback submission');
-                statusElement.textContent = 'Error: No run ID';
-                statusElement.className = 'feedback-status error';
-                return;
+                console.error('feedbackData:', feedbackData);
+                console.error('window.token:', window.token);
+                
+                // Try to recover using window.token
+                if (window.token) {
+                    console.log('Attempting to recover using window.token');
+                    feedbackData.runId = window.token;
+                    console.log('Updated runId to:', feedbackData.runId);
+                }
+                
+                // If still no runId, show error
+                if (!feedbackData.runId) {
+                    statusElement.textContent = 'Error: No run ID';
+                    statusElement.className = 'feedback-status error';
+                    return;
+                }
             }
             
             // Initialize overallFeedback object if it doesn't exist
@@ -786,34 +830,20 @@ const ResultsFeedback = (function() {
         }
     }
 
-    /**
-     * Set overall rating
-     * @param {number} rating - The rating value (1-5)
-     */
-    function setOverallRating(rating) {
-        FeedbackAPI.setOverallRating(rating);
-    }
-    
-    /**
-     * Set overall comment
-     * @param {string} comment - The comment text
-     */
-    function setOverallComment(comment) {
-        FeedbackAPI.setOverallComment(comment);
-    }
-    
-    /**
-     * Save overall feedback
-     */
-    async function saveOverallFeedback() {
-        return FeedbackAPI.saveOverallFeedback();
-    }
-    
-    // This function has been moved to the implementation above
+    // This section has been moved to the implementation above
 
+    /**
+     * Check if the module has been initialized
+     * @returns {boolean} True if initialized, false otherwise
+     */
+    function isInitialized() {
+        return !!feedbackData.runId;
+    }
+    
     // Export public API
     const ResultsFeedbackAPI = {
         init,
+        isInitialized,
         // Unified feedback functions
         addFeedbackUI,
         setAccuracyFeedback,
