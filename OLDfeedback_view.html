@@ -686,7 +686,7 @@ function setupPdfExport(token) {
         let checklist = normalizedData.checklist || {};
         if (!checklist.sections && normalizedData.checklist_id) {
             try {
-                const checklistResponse = await fetch(`${API_BASE_URL}/api/checklists/${normalizedData.checklist_id}`);
+                const checklistResponse = await fetch(`${API_BASE_URL}/api/dmp/checklists/${normalizedData.checklist_id}`);
                 if (checklistResponse.ok) {
                     checklist = await checklistResponse.json();
                     // Add the checklist to the normalized data

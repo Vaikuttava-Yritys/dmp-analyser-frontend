@@ -244,50 +244,22 @@ function renderDomainSummaries(data) {
     // Get normalized data
     const normalizedData = FeedbackData.normalizeData(data);
     
-    // Create section container for collapsible content
-    const sectionContainer = document.createElement('div');
-    sectionContainer.className = 'section-container';
-    container.appendChild(sectionContainer);
-    
-    // Create section header with toggle button
-    const sectionHeader = document.createElement('div');
-    sectionHeader.className = 'section-header-container';
-    
+    // Create section header
     const header = document.createElement('h2');
     header.className = 'section-header';
     header.textContent = 'Domain-level Results';
+    container.appendChild(header);
     
-    const toggleButton = document.createElement('button');
-    toggleButton.className = 'toggle-button section-toggle';
-    toggleButton.innerHTML = '▼';
-    toggleButton.setAttribute('aria-label', 'Toggle domain summaries');
-    toggleButton.setAttribute('aria-expanded', 'true');
-    toggleButton.setAttribute('aria-controls', 'domain-summaries-content');
-    
-    sectionHeader.appendChild(header);
-    sectionHeader.appendChild(toggleButton);
-    sectionContainer.appendChild(sectionHeader);
+    // Create section container for content
+    const sectionContainer = document.createElement('div');
+    sectionContainer.className = 'section-container';
+    container.appendChild(sectionContainer);
     
     // Create content container
     const contentDiv = document.createElement('div');
     contentDiv.className = 'section-content';
     contentDiv.id = 'domain-summaries-content';
     sectionContainer.appendChild(contentDiv);
-    
-    // Add toggle functionality
-    const toggleContent = () => {
-        const isExpanded = toggleButton.getAttribute('aria-expanded') === 'true';
-        toggleButton.setAttribute('aria-expanded', !isExpanded);
-        toggleButton.innerHTML = isExpanded ? '▶' : '▼';
-        contentDiv.style.display = isExpanded ? 'none' : 'block';
-    };
-    
-    toggleButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleContent();
-    });
-    
-    sectionHeader.addEventListener('click', toggleContent);
     
     // Get sections with domains
     const sections = FeedbackData.extractSections(normalizedData);
@@ -346,6 +318,8 @@ function renderDomainSummaries(data) {
             
             const row = document.createElement('tr');
             row.dataset.domainId = domain.domain_id;
+            // Also set the attribute directly to ensure it's available for querySelector
+            row.setAttribute('data-domain-id', domain.domain_id);
             
             // Domain title with ID
             const domainCell = document.createElement('td');
@@ -389,10 +363,27 @@ function renderDomainSummaries(data) {
             // First add the domain row to the tbody
             tbody.appendChild(row);
             
+            // Debug log to check row structure
+            console.log('Domain row structure:', {
+                'row': row,
+                'cells': row.cells,
+                'cellCount': row.cells.length,
+                'lastCell': row.lastElementChild
+            });
+            
             // Then add feedback UI for this domain (after the row is in the DOM)
-            if (typeof ResultsFeedback !== 'undefined') {
-                ResultsFeedback.addDomainFeedbackUI(row, domain, tbody);
-            }
+            
+            // Function to add feedback UI with retry mechanism
+            const addFeedbackWithRetry = (attempts = 0) => {
+                if (typeof ResultsFeedback !== 'undefined') {
+                    ResultsFeedback.addDomainFeedbackUI(row, domain, tbody);
+                } else if (attempts < 5) { // Try up to 5 times
+                    setTimeout(() => addFeedbackWithRetry(attempts + 1), 200); // Wait 200ms before retry
+                }
+            };
+            
+            // Start the retry process
+            addFeedbackWithRetry();
         });
         
         table.appendChild(tbody);
@@ -562,7 +553,8 @@ function renderDomains(data, checklist) {
                 const thead = document.createElement('thead');
                 const headerRow = document.createElement('tr');
                 
-                const headers = ['Item', 'Compliance', 'Question', 'Explanation'];
+                // Headers
+                const headers = ['Item', 'Result', 'Question', 'Explanation', 'Feedback'];
                 headers.forEach(headerText => {
                     const th = document.createElement('th');
                     th.textContent = headerText;
@@ -579,6 +571,13 @@ function renderDomains(data, checklist) {
                 domain.items.forEach((item, index) => {
                     const row = document.createElement('tr');
                     row.className = index % 2 === 0 ? 'even-row' : 'odd-row';
+                    
+                    // Make sure item has an id for feedback purposes
+                    if (!item.id && item.item_id) {
+                        item.id = item.item_id;
+                    } else if (!item.id) {
+                        item.id = `${domain.id || domain.domain_id || 'domain'}-item-${index}`;
+                    }
                     
                     // Item title and ID
                     const itemCell = document.createElement('td');
@@ -628,7 +627,26 @@ function renderDomains(data, checklist) {
                     
                     row.appendChild(explanationCell);
                     
+                    // Add feedback cell and button
+                    const feedbackCell = document.createElement('td');
+                    feedbackCell.className = 'feedback-cell';
+                    row.appendChild(feedbackCell);
+                    
+                    // First add the row to the DOM
                     tbody.appendChild(row);
+                    
+                    // Then add feedback UI for this item
+                    // Function to add feedback UI with retry mechanism
+                    const addFeedbackWithRetry = (attempts = 0) => {
+                        if (typeof ResultsFeedback !== 'undefined') {
+                            ResultsFeedback.addFeedbackUI(row, item, tbody, 'item', item.id);
+                        } else if (attempts < 5) { // Try up to 5 times
+                            setTimeout(() => addFeedbackWithRetry(attempts + 1), 200); // Wait 200ms before retry
+                        }
+                    };
+                    
+                    // Start the retry process
+                    addFeedbackWithRetry();
                 });
                 
                 table.appendChild(tbody);
@@ -642,6 +660,11 @@ function renderDomains(data, checklist) {
         
         container.appendChild(sectionDiv);
     });
+    
+    // Add overall feedback UI at the end of detailed results
+    if (typeof ResultsFeedback !== 'undefined') {
+        ResultsFeedback.addOverallFeedbackUI(container);
+    }
 }
 
 // Render overall assessment section

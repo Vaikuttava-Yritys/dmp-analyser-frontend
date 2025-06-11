@@ -42,11 +42,11 @@ const config = {
 };
 
 // Production environment detection
-const isProduction = () => {
+function isProduction() {
   return window.location.hostname !== 'localhost' && 
          window.location.hostname !== '127.0.0.1' &&
          !window.location.hostname.includes('ngrok.io');
-};
+}
 
 // Production overrides
 if (isProduction()) {

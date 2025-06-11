@@ -28,6 +28,44 @@
     color: #721c24;
 }
 
+/* Feedback Toggle Button */
+.feedback-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+    color: #495057;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 5px 10px;
+    margin-top: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.feedback-toggle-btn:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.feedback-toggle-btn.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.feedback-toggle-btn.has-feedback {
+    background-color: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+.feedback-icon {
+    margin-right: 5px;
+    font-size: 16px;
+}
+
 /* Domain Feedback */
 .domain-feedback-row {
     background-color: #f8f9fa;
@@ -263,4 +301,76 @@
     .comment-input {
         max-width: 100%;
     }
+}
+
+/* Item-level feedback styles */
+.item-details-btn {
+    margin-top: 8px;
+    padding: 3px 8px;
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.item-details-btn:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.item-detail-row {
+    background-color: #f8f9fa;
+}
+
+.item-detail-cell {
+    padding: 15px;
+    border-top: none;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.item-detail-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+    border-left: 3px solid #17a2b8;
+    background-color: rgba(23, 162, 184, 0.05);
+}
+
+.item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.item-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.item-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.item-question, .item-compliance, .item-explanation {
+    margin-bottom: 10px;
+}
+
+.item-feedback {
+    margin-top: 15px;
+    padding: 15px;
+    border-top: 1px solid #dee2e6;
+    background-color: rgba(23, 162, 184, 0.02);
+}
+
+/* Make sure the feedback toggle button is visible */
+.feedback-toggle-btn .icon {
+    display: inline-block;
+    margin-right: 3px;
 }

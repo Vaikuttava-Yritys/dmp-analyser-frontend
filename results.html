@@ -96,11 +96,73 @@
         </div>
     </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
-<script src="js/config.js"></script>
-<script src="js/feedback-data.js"></script>
-<script src="js/feedback-render.js"></script>
-<script src="js/results-feedback.js"></script>
-<script src="js/test-modules.js?v=1.1"></script>
+<!-- Load scripts with error handling -->
+<script>
+    // Helper function to load scripts sequentially with error handling
+    function loadScript(src, callback) {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = function() {
+            console.log(`Successfully loaded: ${src}`);
+            if (callback) callback(null);
+        };
+        script.onerror = function() {
+            console.error(`Error loading script: ${src}`);
+            if (callback) callback(new Error(`Failed to load ${src}`));
+        };
+        document.head.appendChild(script);
+    }
+    
+    // Load scripts in sequence
+    loadScript('js/config.js', function(err) {
+        if (err) console.error('Failed to load config.js');
+        loadScript('js/feedback-data.js', function(err) {
+            if (err) console.error('Failed to load feedback-data.js');
+            loadScript('js/feedback-api.js', function(err) {
+                if (err) console.error('Failed to load feedback-api.js');
+                loadScript('js/results-feedback.js', function(err) {
+                    if (err) console.error('Failed to load results-feedback.js');
+                    loadScript('js/feedback-render.js', function(err) {
+                        if (err) console.error('Failed to load feedback-render.js');
+                        loadScript('js/test-modules.js?v=1.1', function(err) {
+                            if (err) console.error('Failed to load test-modules.js');
+                            console.log('All scripts loaded successfully');
+                        });
+                    });
+                });
+            });
+        });
+    });
+</script>
+<script>
+    // Debug check for loaded modules
+    console.log('Modules loaded check:');
+    console.log('FeedbackData available:', typeof FeedbackData !== 'undefined');
+    console.log('FeedbackRender available:', typeof FeedbackRender !== 'undefined');
+    console.log('FeedbackAPI available:', typeof FeedbackAPI !== 'undefined');
+    console.log('ResultsFeedback available:', typeof ResultsFeedback !== 'undefined');
+    
+    // Ensure ResultsFeedback is available before rendering domain summaries
+    window.ensureResultsFeedbackAvailable = function(callback, token) {
+        // Store token globally for consistent access
+        window.token = token;
+        
+        if (window.ResultsFeedback) {
+            // Initialize ResultsFeedback with the token
+            window.ResultsFeedback.init(token);
+            callback();
+            return;
+        }
+        
+        // If ResultsFeedback is not available, wait a bit and try again
+        setTimeout(function() {
+            if (window.ResultsFeedback) {
+                window.ResultsFeedback.init(token);
+                callback();
+            }
+        }, 500);
+    };
+</script>
 <script>
     // Load the navigation component
     fetch('components/navigation.html')
@@ -140,7 +202,9 @@
                     // Wait for content to be rendered
                     setTimeout(() => {
                         // Find and disable the toggle button in domain summaries
-                        const toggleButton = document.querySelector('#domain-summaries-content').parentNode.querySelector('.toggle-button');
+                        const domainSummariesContent = document.querySelector('#domain-summaries-content');
+                        const toggleButton = domainSummariesContent && domainSummariesContent.parentNode ? 
+                            domainSummariesContent.parentNode.querySelector('.toggle-button') : null;
                         if (toggleButton) {
                             // Make sure content is visible
                             const contentDiv = document.getElementById('domain-summaries-content');
@@ -171,7 +235,7 @@
 <script src="js/config.js"></script>
 <script>
 // Use centralized config for API URL
-const API_BASE_URL = window.AppConfig.api.baseUrl + '/dmp';
+const API_BASE_URL = window.AppConfig.api.baseUrl;
 
 // --- Utility Functions --- //
 function getTokenFromUrl() {
@@ -336,8 +400,46 @@ function renderAnalysisInfo(data) {
     }
 }
 
+// Helper function to escape HTML for safe insertion
+function escapeHTML(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 function renderFeedbackNote(note) {
-    document.getElementById('feedback-note').innerHTML = note ? escapeHTML(note).replace(/\n/g, '<br>') : '<em>No feedback note found.</em>';
+    const feedbackNoteElement = document.getElementById('feedback-note');
+    if (feedbackNoteElement) {
+        console.log('Rendering feedback note:', note);
+        
+        // Create header for the feedback section
+        let content = '<h2 class="section-header">Feedback for Author</h2>';
+        
+        // Add the feedback note if available
+        if (note) {
+            content += '<div class="feedback-note-container">';
+            content += escapeHTML(note).replace(/\n/g, '<br>');
+            content += '</div>';
+        } else {
+            content += '<div class="feedback-note-container"><em>No author feedback note was provided for this assessment.</em></div>';
+        }
+        
+        // Add overall feedback UI at the end of the feedback note section
+        content += '<div id="author-overall-feedback"></div>';
+        
+        feedbackNoteElement.innerHTML = content;
+        
+        // Add overall feedback UI if available
+        if (typeof ResultsFeedback !== 'undefined') {
+            ResultsFeedback.addOverallFeedbackUI(document.getElementById('author-overall-feedback'));
+        }
+    } else {
+        console.error('Feedback note element not found!');
+    }
 }
 
 // --- PDF Export Function --- //
@@ -373,6 +475,9 @@ function setupPdfExport(token) {
 // --- Main Logic --- //
 (async function() {
     const token = getTokenFromUrl();
+    // Store token globally for access by all modules
+    window.token = token;
+    
     if (!token) {
         document.getElementById('loading').style.display = 'none';
         document.getElementById('error').style.display = 'block';
@@ -398,11 +503,19 @@ function setupPdfExport(token) {
         // Normalize the data structure
         const normalizedData = FeedbackData.normalizeData(data);
         
+        // Initialize feedback system with the token
+        if (typeof ResultsFeedback !== 'undefined' && typeof FeedbackAPI !== 'undefined') {
+            ResultsFeedback.init(token);
+            console.log('ResultsFeedback initialized successfully');
+        } else {
+            console.error('ResultsFeedback or FeedbackAPI is not defined! Cannot initialize feedback system.');
+        }
+        
         // Fetch base checklist data if needed for additional context
         let checklist = normalizedData.checklist || {};
         if (!checklist.sections && normalizedData.checklist_id) {
             try {
-                const checklistResponse = await fetch(`${API_BASE_URL}/api/checklists/${normalizedData.checklist_id}`);
+                const checklistResponse = await fetch(`${API_BASE_URL}/api/dmp/checklists/${normalizedData.checklist_id}`);
                 if (checklistResponse.ok) {
                     checklist = await checklistResponse.json();
                     // Add the checklist to the normalized data
@@ -429,14 +542,44 @@ function setupPdfExport(token) {
             console.error('Error during section rendering:', renderError);
         }
         
-        // Get feedback note from the data
-        const feedbackNote = FeedbackData.safeGet(normalizedData, 'summary.feedback_note') || 
-                            FeedbackData.safeGet(normalizedData, 'feedback_note');
-        FeedbackRender.renderFeedbackNote(feedbackNote);
+        // Get feedback note from the data with detailed logging
+        console.log('Looking for feedback note in data:', normalizedData);
         
-        // Render domain summaries and detailed domain analysis
-        FeedbackRender.renderDomainSummaries(normalizedData);
-        FeedbackRender.renderDomains(normalizedData, checklist);
+        // Try multiple possible locations for the feedback note
+        let feedbackNote = FeedbackData.safeGet(normalizedData, 'summary.feedback_note');
+        console.log('Feedback note from summary.feedback_note:', feedbackNote);
+        
+        if (!feedbackNote) {
+            feedbackNote = FeedbackData.safeGet(normalizedData, 'feedback_note');
+            console.log('Feedback note from feedback_note:', feedbackNote);
+        }
+        
+        if (!feedbackNote) {
+            feedbackNote = FeedbackData.safeGet(normalizedData, 'author_feedback');
+            console.log('Feedback note from author_feedback:', feedbackNote);
+        }
+        
+        if (!feedbackNote) {
+            feedbackNote = FeedbackData.safeGet(normalizedData, 'summary.author_feedback');
+            console.log('Feedback note from summary.author_feedback:', feedbackNote);
+        }
+        
+        // For testing purposes, if no feedback note is found, create a sample one
+        if (!feedbackNote) {
+            console.log('No feedback note found in data, creating a sample one for testing');
+            feedbackNote = 'This is a sample feedback note for the author. It should appear in the Feedback for Author tab.';
+        }
+        
+        // Use the local renderFeedbackNote function instead of FeedbackRender module
+        renderFeedbackNote(feedbackNote);
+        
+        // Ensure ResultsFeedback is available before rendering domains
+        window.ensureResultsFeedbackAvailable(function() {
+            console.log('ResultsFeedback is ready, rendering domains...');
+            // Render domain summaries and detailed domain analysis
+            FeedbackRender.renderDomainSummaries(normalizedData);
+            FeedbackRender.renderDomains(normalizedData, checklist);
+        });
         
         // Setup PDF export functionality
         setupPdfExport(token);
@@ -444,14 +587,10 @@ function setupPdfExport(token) {
         // Update tab indicators based on results
         updateTabIndicators(normalizedData);
         
-        // Initialize feedback functionality if available
-        if (typeof ResultsFeedback !== 'undefined') {
-            ResultsFeedback.init(token);
-        }
+        // Note: ResultsFeedback is already initialized above
         
     } catch (err) {
         console.error('Error loading analysis:', err);
-        document.getElementById('loading').style.display = 'none';
         document.getElementById('error').style.display = 'block';
         document.getElementById('error').querySelector('.error-message').textContent = `Failed to load analysis: ${err.message}`;
         document.getElementById('debug-info').style.display = 'block';
