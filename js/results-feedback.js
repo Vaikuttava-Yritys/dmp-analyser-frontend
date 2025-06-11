@@ -59,6 +59,21 @@ const ResultsFeedback = (function() {
     }
     
     /**
+     * Set clarity feedback for a domain or item
+     * @param {string} elementId - The domain or item ID
+     * @param {string} clarity - The clarity value ('yes', 'unclear', or 'off_target')
+     */
+    function setClarityFeedback(elementId, clarity) {
+        // Initialize feedback if it doesn't exist
+        if (!feedbackData.feedback[elementId]) {
+            feedbackData.feedback[elementId] = {};
+        }
+        
+        // Set clarity
+        feedbackData.feedback[elementId].clarity = clarity;
+    }
+    
+    /**
      * Set comment feedback for an element (domain or item)
      * @param {string} elementId - The element ID (domain or item)
      * @param {string} comment - The comment text
@@ -126,7 +141,13 @@ const ResultsFeedback = (function() {
             console.log('Using runId for feedback submission:', feedbackData.runId);
             
             // Use the correct FeedbackAPI method with proper parameters
-            FeedbackAPI.setAccuracyFeedback(elementId, isDomain ? 'domain' : 'item', feedback.accuracy);
+            if (feedback.accuracy) {
+                FeedbackAPI.setAccuracyFeedback(elementId, isDomain ? 'domain' : 'item', feedback.accuracy);
+            }
+            
+            if (feedback.clarity) {
+                FeedbackAPI.setClarityFeedback(elementId, isDomain ? 'domain' : 'item', feedback.clarity);
+            }
             
             if (feedback.comment) {
                 FeedbackAPI.setCommentFeedback(elementId, isDomain ? 'domain' : 'item', feedback.comment);
@@ -207,85 +228,289 @@ const ResultsFeedback = (function() {
         feedbackCell.className = `${elementType}-feedback-cell`;
         feedbackCell.colSpan = row.cells.length;
         
-        // Create feedback container
+        // Create feedback container - main container for all feedback elements
         const feedbackContainer = document.createElement('div');
         feedbackContainer.className = `${elementType}-feedback-container`;
+        feedbackContainer.style.width = '100%';
         
-        // Create accuracy feedback container
+        // Create accuracy feedback container - ensure it's a flex container for inline layout
         const accuracyContainer = document.createElement('div');
         accuracyContainer.className = 'accuracy-feedback';
+        accuracyContainer.style.display = 'flex';
+        accuracyContainer.style.flexDirection = 'row';
+        accuracyContainer.style.alignItems = 'center';
+        accuracyContainer.style.justifyContent = 'flex-start';
+        accuracyContainer.style.flexWrap = 'nowrap';
+        accuracyContainer.style.gap = '8px';
+        accuracyContainer.style.margin = '5px 0';
+        accuracyContainer.style.width = '100%';
         
-        // Create label
+        // Create label - ensure it's on the same row as icons
         const accuracyLabel = document.createElement('label');
-        accuracyLabel.textContent = 'Is this assessment accurate and useful?';
+        accuracyLabel.textContent = 'AI assessment - is it accurate and useful?';
+        accuracyLabel.style.marginRight = '10px';
+        accuracyLabel.style.whiteSpace = 'nowrap';
+        accuracyLabel.style.fontWeight = '500';
         accuracyContainer.appendChild(accuracyLabel);
         
-        // Create toggle buttons container
+        // Create icon-based toggle container - ensure it's on the same row as the question
         const toggleContainer = document.createElement('div');
         toggleContainer.className = 'toggle-container';
+        toggleContainer.style.display = 'flex';
+        toggleContainer.style.alignItems = 'center';
+        toggleContainer.style.gap = '12px';
+        toggleContainer.style.flexShrink = '0';
+        toggleContainer.style.whiteSpace = 'nowrap';
         
-        // Create Yes button
-        const yesButton = document.createElement('button');
-        yesButton.className = 'toggle-btn yes-btn';
-        yesButton.textContent = 'Yes';
-        yesButton.addEventListener('click', () => {
-            // Remove active class from all buttons
-            yesButton.classList.add('active');
-            notUsefulButton.classList.remove('active');
-            noButton.classList.remove('active');
+        // Create Yes icon with green color
+        const yesIcon = document.createElement('span');
+        yesIcon.className = 'feedback-icon yes-icon';
+        yesIcon.innerHTML = '&#10004;';
+        yesIcon.title = 'Yes';
+        yesIcon.style.fontSize = '1.6em';
+        yesIcon.style.cursor = 'pointer';
+        yesIcon.style.color = '#4CAF50'; // Green color
+        yesIcon.style.opacity = '0.6';
+        yesIcon.style.padding = '1px 3px';
+        yesIcon.style.borderRadius = '3px';
+        yesIcon.style.transition = 'all 0.2s ease';
+        yesIcon.style.display = 'inline-block';
+        yesIcon.style.lineHeight = '1';
+        yesIcon.addEventListener('click', () => {
+            // Update active state visually
+            yesIcon.style.opacity = '1';
+            yesIcon.style.transform = 'scale(1.1)';
+            yesIcon.style.backgroundColor = 'rgba(76, 175, 80, 0.05)';
             
-            // Set accuracy feedback in memory but don't save to server
+            notUsefulIcon.style.opacity = '0.6';
+            notUsefulIcon.style.transform = 'scale(1)';
+            notUsefulIcon.style.backgroundColor = 'transparent';
+            
+            noIcon.style.opacity = '0.6';
+            noIcon.style.transform = 'scale(1)';
+            noIcon.style.backgroundColor = 'transparent';
+            
+            // Set accuracy feedback
             setAccuracyFeedback(elementId, 'yes');
         });
+        toggleContainer.appendChild(yesIcon);
         
-        // Create Not Useful button
-        const notUsefulButton = document.createElement('button');
-        notUsefulButton.className = 'toggle-btn not-useful-btn';
-        notUsefulButton.textContent = 'Not useful';
-        notUsefulButton.addEventListener('click', () => {
-            // Remove active class from all buttons
-            yesButton.classList.remove('active');
-            notUsefulButton.classList.add('active');
-            noButton.classList.remove('active');
+        // Create Not Useful icon with amber/orange color
+        const notUsefulIcon = document.createElement('span');
+        notUsefulIcon.className = 'feedback-icon not-useful-icon';
+        notUsefulIcon.innerHTML = '&#9888;';
+        notUsefulIcon.title = 'Not useful';
+        notUsefulIcon.style.fontSize = '1.6em';
+        notUsefulIcon.style.cursor = 'pointer';
+        notUsefulIcon.style.color = '#FF9800'; // Amber/orange color
+        notUsefulIcon.style.opacity = '0.6';
+        notUsefulIcon.style.padding = '1px 3px';
+        notUsefulIcon.style.borderRadius = '3px';
+        notUsefulIcon.style.transition = 'all 0.2s ease';
+        notUsefulIcon.style.display = 'inline-block';
+        notUsefulIcon.style.lineHeight = '1';
+        notUsefulIcon.addEventListener('click', () => {
+            // Update active state visually
+            yesIcon.style.opacity = '0.6';
+            yesIcon.style.transform = 'scale(1)';
+            yesIcon.style.backgroundColor = 'transparent';
             
-            // Set accuracy feedback in memory but don't save to server
+            notUsefulIcon.style.opacity = '1';
+            notUsefulIcon.style.transform = 'scale(1.1)';
+            notUsefulIcon.style.backgroundColor = 'rgba(255, 152, 0, 0.05)';
+            
+            noIcon.style.opacity = '0.6';
+            noIcon.style.transform = 'scale(1)';
+            noIcon.style.backgroundColor = 'transparent';
+            
+            // Set accuracy feedback
             setAccuracyFeedback(elementId, 'not_useful');
         });
+        toggleContainer.appendChild(notUsefulIcon);
         
-        // Create No button
-        const noButton = document.createElement('button');
-        noButton.className = 'toggle-btn no-btn';
-        noButton.textContent = 'No';
-        noButton.addEventListener('click', () => {
-            // Remove active class from all buttons
-            yesButton.classList.remove('active');
-            notUsefulButton.classList.remove('active');
-            noButton.classList.add('active');
+        // Create No icon with red color
+        const noIcon = document.createElement('span');
+        noIcon.className = 'feedback-icon no-icon';
+        noIcon.innerHTML = '&#10006;';
+        noIcon.title = 'No';
+        noIcon.style.fontSize = '1.6em';
+        noIcon.style.cursor = 'pointer';
+        noIcon.style.color = '#F44336'; // Red color
+        noIcon.style.opacity = '0.6';
+        noIcon.style.padding = '1px 3px';
+        noIcon.style.borderRadius = '3px';
+        noIcon.style.transition = 'all 0.2s ease';
+        noIcon.style.display = 'inline-block';
+        noIcon.style.lineHeight = '1';
+        noIcon.addEventListener('click', () => {
+            // Update active state visually
+            yesIcon.style.opacity = '0.6';
+            yesIcon.style.transform = 'scale(1)';
+            yesIcon.style.backgroundColor = 'transparent';
             
-            // Set accuracy feedback in memory but don't save to server
+            notUsefulIcon.style.opacity = '0.6';
+            notUsefulIcon.style.transform = 'scale(1)';
+            notUsefulIcon.style.backgroundColor = 'transparent';
+            
+            noIcon.style.opacity = '1';
+            noIcon.style.transform = 'scale(1.1)';
+            noIcon.style.backgroundColor = 'rgba(244, 67, 54, 0.05)';
+            
+            // Set accuracy feedback
             setAccuracyFeedback(elementId, 'no');
         });
+        toggleContainer.appendChild(noIcon);
         
-        // Add buttons to container
-        toggleContainer.appendChild(yesButton);
-        toggleContainer.appendChild(notUsefulButton);
-        toggleContainer.appendChild(noButton);
         accuracyContainer.appendChild(toggleContainer);
+        
+        // Create clarity feedback container - second question row
+        const clarityContainer = document.createElement('div');
+        clarityContainer.className = 'clarity-feedback';
+        clarityContainer.style.display = 'flex';
+        clarityContainer.style.flexDirection = 'row';
+        clarityContainer.style.alignItems = 'center';
+        clarityContainer.style.justifyContent = 'flex-start';
+        clarityContainer.style.flexWrap = 'nowrap';
+        clarityContainer.style.gap = '8px';
+        clarityContainer.style.margin = '5px 0';
+        clarityContainer.style.width = '100%';
+        
+        // Create label for clarity question
+        const clarityLabel = document.createElement('label');
+        clarityLabel.textContent = 'Criterion - is it clear and appropriate?';
+        clarityLabel.style.marginRight = '10px';
+        clarityLabel.style.whiteSpace = 'nowrap';
+        clarityLabel.style.fontWeight = '500';
+        clarityContainer.appendChild(clarityLabel);
+        
+        // Create icon-based toggle container for clarity
+        const clarityToggleContainer = document.createElement('div');
+        clarityToggleContainer.className = 'toggle-container';
+        clarityToggleContainer.style.display = 'flex';
+        clarityToggleContainer.style.alignItems = 'center';
+        clarityToggleContainer.style.gap = '12px';
+        clarityToggleContainer.style.flexShrink = '0';
+        clarityToggleContainer.style.whiteSpace = 'nowrap';
+        
+        // Create Yes icon for clarity with green color
+        const clarityYesIcon = document.createElement('span');
+        clarityYesIcon.className = 'feedback-icon clarity-yes-icon';
+        clarityYesIcon.innerHTML = '&#10004;';
+        clarityYesIcon.title = 'Yes';
+        clarityYesIcon.style.fontSize = '1.6em';
+        clarityYesIcon.style.cursor = 'pointer';
+        clarityYesIcon.style.color = '#4CAF50'; // Green color
+        clarityYesIcon.style.opacity = '0.6';
+        clarityYesIcon.style.padding = '1px 3px';
+        clarityYesIcon.style.borderRadius = '3px';
+        clarityYesIcon.style.transition = 'all 0.2s ease';
+        clarityYesIcon.style.display = 'inline-block';
+        clarityYesIcon.style.lineHeight = '1';
+        clarityYesIcon.addEventListener('click', () => {
+            // Update active state visually
+            clarityYesIcon.style.opacity = '1';
+            clarityYesIcon.style.transform = 'scale(1.1)';
+            clarityYesIcon.style.backgroundColor = 'rgba(76, 175, 80, 0.05)';
+            
+            clarityUnclearIcon.style.opacity = '0.6';
+            clarityUnclearIcon.style.transform = 'scale(1)';
+            clarityUnclearIcon.style.backgroundColor = 'transparent';
+            
+            clarityOffTargetIcon.style.opacity = '0.6';
+            clarityOffTargetIcon.style.transform = 'scale(1)';
+            clarityOffTargetIcon.style.backgroundColor = 'transparent';
+            
+            // Set clarity feedback
+            setClarityFeedback(elementId, 'yes');
+        });
+        clarityToggleContainer.appendChild(clarityYesIcon);
+        
+        // Create Unclear icon with amber/orange color
+        const clarityUnclearIcon = document.createElement('span');
+        clarityUnclearIcon.className = 'feedback-icon clarity-unclear-icon';
+        clarityUnclearIcon.innerHTML = '&#9888;';
+        clarityUnclearIcon.title = 'Unclear';
+        clarityUnclearIcon.style.fontSize = '1.6em';
+        clarityUnclearIcon.style.cursor = 'pointer';
+        clarityUnclearIcon.style.color = '#FF9800'; // Amber/orange color
+        clarityUnclearIcon.style.opacity = '0.6';
+        clarityUnclearIcon.style.padding = '1px 3px';
+        clarityUnclearIcon.style.borderRadius = '3px';
+        clarityUnclearIcon.style.transition = 'all 0.2s ease';
+        clarityUnclearIcon.style.display = 'inline-block';
+        clarityUnclearIcon.style.lineHeight = '1';
+        clarityUnclearIcon.addEventListener('click', () => {
+            // Update active state visually
+            clarityYesIcon.style.opacity = '0.6';
+            clarityYesIcon.style.transform = 'scale(1)';
+            clarityYesIcon.style.backgroundColor = 'transparent';
+            
+            clarityUnclearIcon.style.opacity = '1';
+            clarityUnclearIcon.style.transform = 'scale(1.1)';
+            clarityUnclearIcon.style.backgroundColor = 'rgba(255, 152, 0, 0.05)';
+            
+            clarityOffTargetIcon.style.opacity = '0.6';
+            clarityOffTargetIcon.style.transform = 'scale(1)';
+            clarityOffTargetIcon.style.backgroundColor = 'transparent';
+            
+            // Set clarity feedback
+            setClarityFeedback(elementId, 'unclear');
+        });
+        clarityToggleContainer.appendChild(clarityUnclearIcon);
+        
+        // Create Off Target icon with red color
+        const clarityOffTargetIcon = document.createElement('span');
+        clarityOffTargetIcon.className = 'feedback-icon clarity-offtarget-icon';
+        clarityOffTargetIcon.innerHTML = '&#10006;';
+        clarityOffTargetIcon.title = 'Off target';
+        clarityOffTargetIcon.style.fontSize = '1.6em';
+        clarityOffTargetIcon.style.cursor = 'pointer';
+        clarityOffTargetIcon.style.color = '#F44336'; // Red color
+        clarityOffTargetIcon.style.opacity = '0.6';
+        clarityOffTargetIcon.style.padding = '1px 3px';
+        clarityOffTargetIcon.style.borderRadius = '3px';
+        clarityOffTargetIcon.style.transition = 'all 0.2s ease';
+        clarityOffTargetIcon.style.display = 'inline-block';
+        clarityOffTargetIcon.style.lineHeight = '1';
+        clarityOffTargetIcon.addEventListener('click', () => {
+            // Update active state visually
+            clarityYesIcon.style.opacity = '0.6';
+            clarityYesIcon.style.transform = 'scale(1)';
+            clarityYesIcon.style.backgroundColor = 'transparent';
+            
+            clarityUnclearIcon.style.opacity = '0.6';
+            clarityUnclearIcon.style.transform = 'scale(1)';
+            clarityUnclearIcon.style.backgroundColor = 'transparent';
+            
+            clarityOffTargetIcon.style.opacity = '1';
+            clarityOffTargetIcon.style.transform = 'scale(1.1)';
+            clarityOffTargetIcon.style.backgroundColor = 'rgba(244, 67, 54, 0.05)';
+            
+            // Set clarity feedback
+            setClarityFeedback(elementId, 'off_target');
+        });
+        clarityToggleContainer.appendChild(clarityOffTargetIcon);
+        
+        clarityContainer.appendChild(clarityToggleContainer);
+        
+        // Add clarity container to feedback container
+        feedbackContainer.appendChild(clarityContainer);
         
         // Create comment input container with everything on one row
         const commentContainer = document.createElement('div');
         commentContainer.className = 'comment-input-row';
         
-        const commentLabel = document.createElement('label');
-        commentLabel.textContent = 'Comment (optional):';
-        commentLabel.className = 'comment-label';
-        commentContainer.appendChild(commentLabel);
+        // No label needed as per requirements
+        // const commentLabel = document.createElement('label');
+        // commentLabel.textContent = 'Comment (optional):';
+        // commentLabel.className = 'comment-label';
+        // commentContainer.appendChild(commentLabel);
         
         const commentInput = document.createElement('input');
         commentInput.type = 'text';
         commentInput.className = 'comment-input';
         commentInput.maxLength = 140;
-        commentInput.placeholder = 'Add your comment here...';
+        commentInput.placeholder = 'Your optional comment here...';
         commentInput.addEventListener('input', (e) => {
             setCommentFeedback(elementId, e.target.value);
         });
@@ -301,7 +526,7 @@ const ResultsFeedback = (function() {
         });
         commentContainer.appendChild(submitButton);
         
-        // Create cancel button inline with submit button
+        // Create cancel button inline with submit button - matching style with submit button
         const cancelButton = document.createElement('button');
         cancelButton.className = 'inline-cancel-btn';
         cancelButton.textContent = 'Cancel';
@@ -310,8 +535,9 @@ const ResultsFeedback = (function() {
         cancelButton.style.color = 'white';
         cancelButton.style.border = 'none';
         cancelButton.style.borderRadius = '4px';
-        cancelButton.style.padding = '4px 10px';
+        cancelButton.style.padding = '6px 12px'; // Match submit button padding
         cancelButton.style.cursor = 'pointer';
+        cancelButton.style.fontSize = submitButton.style.fontSize || '14px'; // Match submit button font size
         cancelButton.addEventListener('click', () => {
             // Hide the feedback row
             feedbackRow.style.display = 'none';
@@ -326,7 +552,8 @@ const ResultsFeedback = (function() {
         statusIndicator.id = `${elementType}-${elementId}-feedback-status`;
         commentContainer.appendChild(statusIndicator);
         
-        // Add to feedback container
+        // Add to feedback container - change order to put clarity first
+        feedbackContainer.appendChild(clarityContainer);
         feedbackContainer.appendChild(accuracyContainer);
         feedbackContainer.appendChild(commentContainer);
         
@@ -360,14 +587,39 @@ const ResultsFeedback = (function() {
         // Check for existing feedback and update UI accordingly
         const existingFeedback = feedbackData.feedback[elementId];
         if (existingFeedback) {
+            // Check for accuracy feedback
             if (existingFeedback.accuracy === 'yes') {
-                yesButton.classList.add('active');
+                yesIcon.style.opacity = '1';
+                yesIcon.style.transform = 'scale(1.1)';
+                yesIcon.style.backgroundColor = 'rgba(76, 175, 80, 0.05)';
                 feedbackToggle.classList.add('has-feedback');
             } else if (existingFeedback.accuracy === 'not_useful') {
-                notUsefulButton.classList.add('active');
+                notUsefulIcon.style.opacity = '1';
+                notUsefulIcon.style.transform = 'scale(1.1)';
+                notUsefulIcon.style.backgroundColor = 'rgba(255, 152, 0, 0.05)';
                 feedbackToggle.classList.add('has-feedback');
             } else if (existingFeedback.accuracy === 'no') {
-                noButton.classList.add('active');
+                noIcon.style.opacity = '1';
+                noIcon.style.transform = 'scale(1.1)';
+                noIcon.style.backgroundColor = 'rgba(244, 67, 54, 0.05)';
+                feedbackToggle.classList.add('has-feedback');
+            }
+            
+            // Check for clarity feedback
+            if (existingFeedback.clarity === 'yes') {
+                clarityYesIcon.style.opacity = '1';
+                clarityYesIcon.style.transform = 'scale(1.1)';
+                clarityYesIcon.style.backgroundColor = 'rgba(76, 175, 80, 0.05)';
+                feedbackToggle.classList.add('has-feedback');
+            } else if (existingFeedback.clarity === 'unclear') {
+                clarityUnclearIcon.style.opacity = '1';
+                clarityUnclearIcon.style.transform = 'scale(1.1)';
+                clarityUnclearIcon.style.backgroundColor = 'rgba(255, 152, 0, 0.05)';
+                feedbackToggle.classList.add('has-feedback');
+            } else if (existingFeedback.clarity === 'off_target') {
+                clarityOffTargetIcon.style.opacity = '1';
+                clarityOffTargetIcon.style.transform = 'scale(1.1)';
+                clarityOffTargetIcon.style.backgroundColor = 'rgba(244, 67, 54, 0.05)';
                 feedbackToggle.classList.add('has-feedback');
             }
             

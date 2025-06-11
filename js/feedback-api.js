@@ -63,6 +63,22 @@ const FeedbackAPI = (function() {
         
         container[id].comment = comment;
     }
+    
+    /**
+     * Set clarity feedback for a domain or item
+     * @param {string} id - The domain or item ID
+     * @param {string} type - The type of feedback ('domain' or 'item')
+     * @param {string} clarity - The clarity value ('yes', 'unclear', or 'off_target')
+     */
+    function setClarityFeedback(id, type, clarity) {
+        const container = type === 'domain' ? feedbackData.domainFeedback : feedbackData.itemFeedback;
+        
+        if (!container[id]) {
+            container[id] = {};
+        }
+        
+        container[id].clarity = clarity;
+    }
 
     /**
      * Save feedback for a domain or item
@@ -89,7 +105,7 @@ const FeedbackAPI = (function() {
             const feedbackItem = container[id] || {};
             
             // Check if we have any feedback to save
-            if (!feedbackItem.accuracy && !feedbackItem.comment) {
+            if (!feedbackItem.accuracy && !feedbackItem.clarity && !feedbackItem.comment) {
                 statusElement.textContent = 'No feedback to save';
                 statusElement.className = 'feedback-status warning';
                 
@@ -328,6 +344,7 @@ const FeedbackAPI = (function() {
         init,
         isInitialized,
         setAccuracyFeedback,
+        setClarityFeedback,
         setCommentFeedback,
         saveFeedback,
         setOverallRating,
