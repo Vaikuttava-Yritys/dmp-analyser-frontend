@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Minimal DMP API Test</title>
+</head>
+<body>
+  <h1>Minimal DMP API Test</h1>
+  <pre id="output">Loading…</pre>
+
+  <!-- Inject environment variables - Single source of truth -->
+  <script>
+    // This is the ONLY place where environment variables should be defined
+    // All other files should read from window.AppConfig after config.js initializes it
+    window.ENV = {
+      // Environment
+      NODE_ENV: 'development',
+      DEBUG: 'true',
+      
+      // API Configuration
+      API_BASE_URL: 'https://dmp-apim.azure-api.net',
+      API_TIMEOUT: '30000',
+      API_RETRIES: '3',
+      
+      // Auth Configuration
+      AUTH_PROXY_URL: 'https://dmp-token-proxy.azurewebsites.net',
+      AUTH_PROXY_TOKEN_ENDPOINT: '/token',
+      AZURE_CLIENT_ID: '2e93d7f3-7e47-4767-ac3b-9f19e9e57784',
+      AZURE_TENANT_ID: 'f592cb5f-b8bc-41b9-901f-9a99ab84afa6',
+      // For client credentials flow, must use .default suffix
+      AZURE_API_SCOPE: 'api://2fb1d88c-02fe-4a8e-9f8d-dadbc9380dc3/.default',
+      
+      // UI Configuration
+      UI_DEBUG: 'true',
+      SHOW_API_STATUS: 'true'
+    };
+  </script>
+
+  <!-- Script loader - handles all dependencies with defer -->
+  <script src="js/loader.js" defer></script>
+  
+  <!-- Application initialization -->
+  <script defer>
+    // Define page-specific initialization function
+    window.initializePageContent = async function() {
+      // Run the test after scripts are loaded
+      try {
+        await runTest();
+      } catch (error) {
+        document.getElementById('output').textContent = 'ERROR:\n' + error.message;
+        console.error('Test failed:', error);
+      }
+    };
+    
+    // Initialize the application when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      window.DMP_LOADER.initApp({
+        loadAppJs: false,
+        loadInitJs: false,
+        callback: window.initializePageContent
+      }).catch(error => {
+        document.getElementById('output').textContent = 'Failed to load required scripts:\n' + error.message;
+        console.error('Script loading failed:', error);
+        
+        // Hide spinner even if initialization fails
+        if (typeof hideSpinner === 'function') {
+          hideSpinner();
+        }
+      });
+    });
+
+    async function runTest() {
+      const out = document.getElementById('output');
+
+      try {
+        // 1) Fetch a token from your auth proxy
+        const tokenResp = await fetch(window.ENV.AUTH_PROXY_URL + window.ENV.AUTH_PROXY_TOKEN_ENDPOINT);
+        if (!tokenResp.ok) throw new Error(`Token proxy error ${tokenResp.status}`);
+        const { access_token } = await tokenResp.json();
+        out.textContent = 'Token acquired, calling API…\n\n';
+
+        // 2) Call the APIM endpoint
+        const apiResp = await fetch('https://dmp-apim.azure-api.net/api/dmp/prompts', {
+          headers: { Authorization: `Bearer ${access_token}`,
+            "Ocp-Apim-Subscription-Key" : "f13dca9d891e46e6969ce821360acab5"
+           }
+        });
+
+        out.textContent += `API status: ${apiResp.status}\n\n`;
+
+        // 3) Show body (or error)
+        const text = await apiResp.text();
+        out.textContent += text;
+      } catch (e) {
+        out.textContent = 'ERROR:\n' + e.stack;
+      }
+    } // Close runTest function
+  </script>
+</body>
+</html>

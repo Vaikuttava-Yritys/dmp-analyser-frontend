@@ -1,8 +1,5 @@
-// API base URL - loaded from centralized config
-const API_BASE = window.AppConfig?.api?.baseUrl || 'http://localhost:8002';
-
 // Default parameters for analysis (will be overridden by dropdown selections)
-let selectedChecklistId = "finnish_dmp_evaluation";
+let selectedChecklistId = window.AppConfig?.ui?.defaultChecklistId || "finnish_dmp_evaluation";
 let selectedConfigId = "Full-GPT4-turbo-preview";
 
 // Global variables to store current analysis info
@@ -16,8 +13,34 @@ let apiHealthy = false;
 function updateChecklistDownloadLink() {
     const downloadChecklistBtn = document.getElementById('download-checklist-btn');
     if (downloadChecklistBtn) {
-        // Update href attribute for the link using centralized config
-        downloadChecklistBtn.setAttribute('href', `${API_BASE}/dmp/checklists/${selectedChecklistId}/export-pdf`);
+        // Use AppConfig for endpoints
+        const endpoint = window.AppConfig?.api?.endpoints?.exportChecklist || '/dmp/checklists/${id}/export-pdf';
+        const url = endpoint.replace('${id}', selectedChecklistId);
+        downloadChecklistBtn.setAttribute('href', url);
+    }
+}
+
+/**
+ * Switch to a specific tab by index
+ * @param {number} tabIndex - The index of the tab to activate (0-based)
+ */
+function switchToTab(tabIndex) {
+    const tabs = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    if (tabs.length === 0 || tabContents.length === 0) return;
+    
+    // Ensure tabIndex is within bounds
+    const index = Math.max(0, Math.min(tabIndex, tabs.length - 1));
+    
+    // Activate the selected tab
+    tabs.forEach(tab => tab.classList.remove('active'));
+    tabs[index].classList.add('active');
+    
+    // Show the selected tab content, hide others
+    tabContents.forEach(content => content.style.display = 'none');
+    if (tabContents[index]) {
+        tabContents[index].style.display = 'block';
     }
 }
 
@@ -39,20 +62,8 @@ function resetFormToDefaultState() {
         }
     });
     
-    // Reset any custom tabs to default state
-    const tabs = document.querySelectorAll('.tab-button');
-    if (tabs.length > 0) {
-        // Activate the first tab
-        tabs.forEach(tab => tab.classList.remove('active'));
-        tabs[0].classList.add('active');
-        
-        // Show the first tab content, hide others
-        const tabContents = document.querySelectorAll('.tab-content');
-        tabContents.forEach(content => content.style.display = 'none');
-        if (tabContents[0]) {
-            tabContents[0].style.display = 'block';
-        }
-    }
+    // Switch to the first tab
+    switchToTab(0);
     
     // Clear any validation messages
     const validationMessages = document.querySelectorAll('.validation-message');
@@ -61,6 +72,14 @@ function resetFormToDefaultState() {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    // Configure the global API client with authentication
+    if (window.ApiClient) {
+        window.ApiClient.useAuthentication(true);
+    } else {
+        console.error('ApiClient not found. Make sure api.js is loaded before app.js');
+        return;
+    }
+    
     // Show the form immediately so users know they can interact with it
     const analysisForm = document.getElementById('analysis-form');
     if (analysisForm) {
@@ -125,7 +144,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (downloadChecklistBtn) {
         downloadChecklistBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            window.open(`${API_BASE}/api/dmp/checklists/${selectedChecklistId}/export-pdf`, '_blank');
+            // Use the ApiClient for consistency
+            const endpoint = window.AppConfig?.api?.endpoints?.exportChecklist || '/dmp/checklists/${id}/export-pdf';
+            const url = endpoint.replace('${id}', selectedChecklistId);
+            window.open(url, '_blank');
         });
     }
 });
@@ -136,24 +158,17 @@ async function checkApiHealth() {
     const formElement = document.getElementById('analysis-form');
     
     try {
-        // Try to fetch the API health check endpoint
-        // Note: The correct endpoint is /health (not /api/v1/health)
-        const response = await fetch(`${API_BASE}/health`, {
-            method: 'GET',
+        // Try to fetch the API health check endpoint using the global API client
+        const healthEndpoint = window.AppConfig?.api?.endpoints?.health || '/health';
+        const response = await window.ApiClient.get(healthEndpoint, {
             headers: {
                 'Accept': 'application/json'
-            },
-            mode: 'cors', // Add explicit CORS mode
-            credentials: 'same-origin'
+            }
         });
         
-        if (response.ok) {
-            apiHealthy = true;
-            statusElement.innerHTML = '';
-            formElement.style.display = 'block';
-        } else {
-            throw new Error(`API returned status: ${response.status}`);
-        }
+        apiHealthy = true;
+        statusElement.innerHTML = '';
+        formElement.style.display = 'block';
     } catch (error) {
         apiHealthy = false;
         statusElement.innerHTML = `<div class="status-error">API is offline or unreachable. Please try again later.</div>`;
@@ -230,12 +245,14 @@ async function handleAnalysisSubmit(event) {
                 uploadUrl += `&user_email=${encodeURIComponent(userEmail)}`;
             }
             
-            // Submit PDF upload request
-            response = await fetch(uploadUrl, {
+            // Submit PDF upload request using the API client
+            // Extract the path from the full URL
+            const uploadPath = uploadUrl.replace(API_BASE, '');
+            response = await apiClient.request(uploadPath, {
                 method: 'POST',
-                mode: 'cors',
-                credentials: 'same-origin',
-                body: formData
+                body: formData,
+                // Don't set Content-Type header for FormData
+                headers: {}
             });
         } else {
             // Process text input - try to parse as JSON if it looks like JSON
@@ -272,15 +289,14 @@ async function handleAnalysisSubmit(event) {
                 requestBody.user_email = userEmail;
             }
             
-            // Submit text analysis request
-            response = await fetch(`${API_BASE}/api/dmp/enriched-checklists/analyze`, {
+            // Submit text analysis request using the ApiClient for consistency
+            const analyzeEndpoint = window.AppConfig?.api?.endpoints?.analyze || '/dmp/enriched-checklists/analyze';
+            response = await window.ApiClient.request(analyzeEndpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
-                mode: 'cors',
-                credentials: 'same-origin',
                 body: JSON.stringify(requestBody)
             });
         }
@@ -292,6 +308,9 @@ async function handleAnalysisSubmit(event) {
         const data = await response.json();
         currentRunId = data.run_id;
         currentAccessToken = data.access_token;
+        
+        // Set up results viewing with the access token
+        setupResultsViewing(currentAccessToken);
         
         // Update status message to inform user about email notification
         document.getElementById('status-message').textContent = `Your DMP analysis has been submitted successfully! You will receive an email at ${userEmail} when the analysis is ready.`;
@@ -356,13 +375,24 @@ function setupResultsViewing(accessToken) {
         const copySuccessMessage = document.getElementById('copy-success-message');
         
         if (copyButton && copySuccessMessage) {
-            copyButton.addEventListener('click', () => {
-                shareableLink.select();
-                document.execCommand('copy');
-                copySuccessMessage.style.display = 'inline';
-                setTimeout(() => {
-                    copySuccessMessage.style.display = 'none';
-                }, 3000);
+            copyButton.addEventListener('click', async () => {
+                try {
+                    // Use the modern Clipboard API instead of the deprecated execCommand
+                    await navigator.clipboard.writeText(shareableLink.value);
+                    copySuccessMessage.style.display = 'inline';
+                    setTimeout(() => {
+                        copySuccessMessage.style.display = 'none';
+                    }, 3000);
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                    // Fallback for browsers that don't support clipboard API
+                    shareableLink.select();
+                    document.execCommand('copy');
+                    copySuccessMessage.style.display = 'inline';
+                    setTimeout(() => {
+                        copySuccessMessage.style.display = 'none';
+                    }, 3000);
+                }
             });
         }
     }

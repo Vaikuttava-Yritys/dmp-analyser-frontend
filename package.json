@@ -6,6 +6,9 @@
       "build": "echo 'No build step required for static site'",
       "start": "npx http-server -p 3000 -c-1"
     },
+    "dependencies": {
+      "@azure/msal-browser": "^2.38.0"
+    },
     "keywords": [],
     "author": "",
     "license": "CC BY-NC 4.0"

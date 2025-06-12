@@ -4,42 +4,81 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DMP Analyser</title>
-    <!-- Load configuration first -->
-    <script src="js/config.js"></script>
-    <!-- Load API client -->
-    <script src="js/api.js"></script>
-    <!-- Load initialization script -->
-    <script src="js/init.js" defer></script>
-    <!-- Load main application logic -->
-    <script src="app.js?v=1.1" defer></script>
-    <!-- Tab switching script -->
+    
+    <!-- Performance hints for faster loading -->
+    <link rel="preconnect" href="https://dmp-token-proxy.azurewebsites.net">
+    <link rel="preload" href="js/loader.js" as="script">
+    <link rel="preload" href="js/config.js" as="script">
+    <link rel="preload" href="js/auth.js" as="script">
+    <!-- Inject environment variables - Single source of truth -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Tab switching functionality
-            const tabButtons = document.querySelectorAll('.tab-button');
+        // This is the ONLY place where environment variables should be defined
+        // All other files should read from window.AppConfig after config.js initializes it
+        window.ENV = {
+            // Environment
+            NODE_ENV: 'development',
+            DEBUG: 'true',
             
-            tabButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    // Remove active class from all buttons and panes
-                    document.querySelectorAll('.tab-button').forEach(btn => {
-                        btn.classList.remove('active');
-                    });
-                    document.querySelectorAll('.tab-pane').forEach(pane => {
-                        pane.classList.remove('active');
-                    });
-                    
-                    // Add active class to clicked button and corresponding pane
-                    this.classList.add('active');
-                    const tabId = this.getAttribute('data-tab');
-                    document.getElementById(tabId).classList.add('active');
-                    
-                    // Clear the other input method when switching tabs
-                    if (tabId === 'text-input-tab') {
-                        document.getElementById('pdf-file').value = '';
-                    } else if (tabId === 'file-upload-tab') {
-                        document.getElementById('text-input').value = '';
-                    }
-                });
+            // API Configuration
+            API_BASE_URL: 'https://dmp-apim.azure-api.net',
+            API_TIMEOUT: '30000',
+            API_RETRIES: '3',
+            
+            // Auth Configuration
+            AUTH_PROXY_URL: 'https://dmp-token-proxy.azurewebsites.net',
+            AUTH_PROXY_TOKEN_ENDPOINT: '/token',
+            AZURE_CLIENT_ID: '2e93d7f3-7e47-4767-ac3b-9f19e9e57784',
+            AZURE_TENANT_ID: 'f592cb5f-b8bc-41b9-901f-9a99ab84afa6',
+            // For client credentials flow, must use .default suffix
+            AZURE_API_SCOPE: 'api://2fb1d88c-02fe-4a8e-9f8d-dadbc9380dc3/.default',
+            
+            // UI Configuration
+            UI_DEBUG: 'true',
+            SHOW_API_STATUS: 'true',
+            DEFAULT_CHECKLIST_ID: 'finnish_dmp_evaluation'
+        };
+    </script>
+    
+    <!-- Script loader - handles all dependencies with defer -->
+    <script src="js/loader.js" defer></script>
+    
+    <!-- Application initialization -->
+    <script defer>
+        // Hide spinner function - separated from page initialization
+        function hideSpinner() {
+            var spinner = document.getElementById('spinner-overlay');
+            if (spinner) spinner.style.opacity = 0;
+            setTimeout(function() {
+                if (spinner) spinner.style.display = 'none';
+            }, 400);
+        }
+        
+        // Hide spinner when all resources are loaded
+        window.addEventListener('load', hideSpinner);
+        
+        // Single initialization point after DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the application with all required scripts
+            window.DMP_LOADER.initApp({
+                loadAppJs: true,
+                loadInitJs: true,
+                callback: window.initializePageContent
+            }).catch(error => {
+                console.error('Failed to initialize application:', error);
+                // Show error message to user
+                var statusElement = document.getElementById('api-status');
+                if (statusElement) {
+                    statusElement.textContent = '❌ Initialization Failed';
+                    statusElement.className = 'disconnected';
+                }
+                // Show error in the error container if available
+                var errorContainer = document.getElementById('error-message');
+                if (errorContainer) {
+                    errorContainer.textContent = 'Application initialization failed: ' + (error.message || 'Unknown error');
+                    errorContainer.style.display = 'block';
+                }
+                // Hide spinner even if initialization fails
+                hideSpinner();
             });
         });
     </script>
@@ -204,9 +243,19 @@
     </style>
 </head>
 <body>
-  <div id="spinner-overlay">
-    <div class="spinner"></div>
-  </div>
+    <!-- Spinner overlay -->
+    <div id="spinner-overlay">
+        <div class="spinner"></div>
+    </div>
+    
+    <!-- No-JS fallback message -->
+    <noscript>
+        <div style="padding: 20px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 5px; margin: 20px;">
+            <h2>JavaScript Required</h2>
+            <p>This application requires JavaScript to function properly. Please enable JavaScript in your browser settings and reload the page.</p>
+            <p>The DMP Analyser needs JavaScript to securely authenticate with the API and process your data.</p>
+        </div>
+    </noscript>
     <div class="container">
         <!-- Include the navigation component -->
         <div id="navigation-placeholder"></div>
@@ -330,9 +379,10 @@
                 </span>
             </div>
     </div>
+    <!-- Script loader is already included in the head with proper defer attribute -->
     <script>
-        // Check API status when the page loads
-        document.addEventListener('DOMContentLoaded', function() {
+        // Page-specific initialization function that will be called by the loader
+        window.initializePageContent = async function() {
             // Check API status and update UI
             if (typeof checkApiHealth === 'function') {
                 checkApiHealth().then(isHealthy => {
@@ -365,19 +415,17 @@
             
             // Add click event listeners to tab buttons
             tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
+                button.addEventListener('click', function() {
                     // Remove active class from all buttons and panes
                     tabButtons.forEach(btn => btn.classList.remove('active'));
                     tabPanes.forEach(pane => pane.classList.remove('active'));
                     
-                    // Add active class to clicked button
+                    // Add active class to clicked button and corresponding pane
                     button.classList.add('active');
-                    
-                    // Show corresponding tab pane
                     const tabId = button.getAttribute('data-tab');
                     document.getElementById(tabId).classList.add('active');
                     
-                    // Clear inputs when switching tabs
+                    // Clear the other input method when switching tabs
                     if (tabId === 'text-input-tab') {
                         document.getElementById('pdf-file').value = '';
                     } else if (tabId === 'file-upload-tab') {
@@ -386,15 +434,80 @@
                 });
             });
             
-            // Hide spinner when everything is loaded
-            window.addEventListener('load', function() {
-                var spinner = document.getElementById('spinner-overlay');
-                if (spinner) spinner.style.opacity = 0;
-                setTimeout(function() {
-                    if (spinner) spinner.style.display = 'none';
-                }, 400);
-            });
-        }); // Close DOMContentLoaded
+            // Form validation and submission handling
+            const form = document.getElementById('dmp-form');
+            const submitButton = document.getElementById('submit-button');
+            const resultContainer = document.getElementById('result-container');
+            const errorContainer = document.getElementById('error-message');
+            
+            if (form) {
+                form.addEventListener('submit', async function(event) {
+                    event.preventDefault();
+                    
+                    // Clear previous errors
+                    if (errorContainer) {
+                        errorContainer.textContent = '';
+                        errorContainer.style.display = 'none';
+                    }
+                    
+                    // Get form data
+                    const formData = new FormData(form);
+                    const textInput = document.getElementById('text-input').value.trim();
+                    const fileInput = document.getElementById('pdf-file');
+                    
+                    // Validate inputs
+                    if (textInput === '' && (!fileInput.files || fileInput.files.length === 0)) {
+                        if (errorContainer) {
+                            errorContainer.textContent = 'Please provide either text input or upload a PDF file.';
+                            errorContainer.style.display = 'block';
+                        }
+                        return;
+                    }
+                    
+                    try {
+                        // Disable submit button during processing
+                        if (submitButton) {
+                            submitButton.disabled = true;
+                            submitButton.textContent = 'Processing...';
+                        }
+                        
+                        // Show loading indicator
+                        if (resultContainer) {
+                            resultContainer.innerHTML = '<div class="spinner"></div><p>Analyzing data, please wait...</p>';
+                            resultContainer.style.display = 'block';
+                        }
+                        
+                        // Send data to API using authenticated client
+                        const response = await apiClient.post('/api/analyze', formData);
+                        
+                        // Handle response
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (resultContainer) {
+                                resultContainer.innerHTML = `<h3>Analysis Results</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                            }
+                        } else {
+                            throw new Error(`API error: ${response.status} ${response.statusText}`);
+                        }
+                    } catch (error) {
+                        console.error('Form submission error:', error);
+                        if (errorContainer) {
+                            errorContainer.textContent = `Error: ${error.message || 'Failed to process request'}`;
+                            errorContainer.style.display = 'block';
+                        }
+                        if (resultContainer) {
+                            resultContainer.style.display = 'none';
+                        }
+                    } finally {
+                        // Re-enable submit button
+                        if (submitButton) {
+                            submitButton.disabled = false;
+                            submitButton.textContent = 'Submit';
+                        }
+                    }
+                });
+            }
+        }; // Close initializePageContent function
     </script>
 </body>
 </html>
