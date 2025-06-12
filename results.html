@@ -8,6 +8,24 @@
     <link rel="stylesheet" href="css/feedback-styles.css?v=1.1">
     <link rel="stylesheet" href="css/tabs.css">
     <link rel="stylesheet" href="css/results-feedback.css?v=1.0">
+    
+    <!-- Environment configuration - Single source of truth -->
+    <script>
+        // Initialize environment variables with defaults
+        window.ENV = {
+            // UI configuration
+            DEBUG: false,
+            SHOW_API_STATUS: true,
+            
+            // Feature flags
+            ENABLE_FEEDBACK: true
+        };
+        
+        // Note: AppConfig will be initialized by config.js
+    </script>
+    
+    <!-- Load the script loader first -->
+    <script src="js/loader.js"></script>
 </head>
 <body>
     <div id="spinner-overlay">
@@ -96,88 +114,98 @@
         </div>
     </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
-<!-- Load scripts with error handling -->
+<!-- Load scripts using centralized loader -->
+<script src="js/loader.js"></script>
 <script>
-    // Helper function to load scripts sequentially with error handling
-    function loadScript(src, callback) {
-        const script = document.createElement('script');
-        script.src = src;
-        script.onload = function() {
-            console.log(`Successfully loaded: ${src}`);
-            if (callback) callback(null);
-        };
-        script.onerror = function() {
-            console.error(`Error loading script: ${src}`);
-            if (callback) callback(new Error(`Failed to load ${src}`));
-        };
-        document.head.appendChild(script);
+    // Initialize the application using the centralized loader
+    function initResultsPage() {
+        console.log('Initializing results page with AppConfig:', window.AppConfig);
+        
+        // Initialize the results page functionality
+        if (window.ResultsFeedback) {
+            const token = getTokenFromUrl();
+            if (token) {
+                window.token = token;
+                window.ResultsFeedback.init(token);
+            } else {
+                showError('No access token provided. Please use a valid results link.');
+            }
+        } else {
+            console.error('ResultsFeedback module not available');
+            showError('Failed to load required modules. Please try refreshing the page.');
+        }
     }
     
-    // Load scripts in sequence
-    loadScript('js/config.js', function(err) {
-        if (err) console.error('Failed to load config.js');
-        loadScript('js/feedback-data.js', function(err) {
-            if (err) console.error('Failed to load feedback-data.js');
-            loadScript('js/feedback-api.js', function(err) {
-                if (err) console.error('Failed to load feedback-api.js');
-                loadScript('js/results-feedback.js', function(err) {
-                    if (err) console.error('Failed to load results-feedback.js');
-                    loadScript('js/feedback-render.js', function(err) {
-                        if (err) console.error('Failed to load feedback-render.js');
-                        loadScript('js/test-modules.js?v=1.1', function(err) {
-                            if (err) console.error('Failed to load test-modules.js');
-                            console.log('All scripts loaded successfully');
-                        });
-                    });
-                });
-            });
+    // Show error message
+    function showError(message) {
+        const errorElement = document.getElementById('error');
+        const errorMessageElement = document.querySelector('.error-message');
+        const loadingElement = document.getElementById('loading');
+        
+        if (errorElement && errorMessageElement) {
+            errorMessageElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        if (loadingElement) {
+            loadingElement.style.display = 'none';
+        }
+    }
+    
+    // Load all required scripts and initialize the application
+    document.addEventListener('DOMContentLoaded', function() {
+        // Make sure the loader is available
+        if (!window.DMP_LOADER) {
+            console.error('DMP_LOADER not found. Make sure loader.js is loaded first.');
+            showError('Failed to initialize application: Script loader not found');
+            return;
+        }
+
+        // Initialize the application using the centralized loader
+        window.DMP_LOADER.initApp({
+            loadAppJs: false,
+            loadInitJs: false,
+            callback: async function() {
+                try {
+                    // Initialize API client with authentication
+                    if (window.ApiClient) {
+                        window.ApiClient.useAuthentication(true);
+                        console.log('API client configured to use authentication');
+                    } else {
+                        throw new Error('API client not available after core scripts loaded');
+                    }
+                    
+                    // Load additional modules needed for results page
+                    await Promise.all([
+                        window.DMP_LOADER.loadScript('js/feedback-data.js'),
+                        window.DMP_LOADER.loadScript('js/feedback-api.js'),
+                        window.DMP_LOADER.loadScript('js/results-feedback.js'),
+                        window.DMP_LOADER.loadScript('js/feedback-render.js')
+                    ]);
+                    
+                    // Initialize the results page
+                    initResultsPage();
+                } catch (err) {
+                    console.error('Error in initialization callback:', err);
+                    showError('Failed to initialize application: ' + err.message);
+                }
+            }
+        }).catch(error => {
+            console.error('Failed to initialize application:', error);
+            showError('Application initialization failed: ' + error.message);
         });
     });
 </script>
 <script>
-    // Debug check for loaded modules
-    console.log('Modules loaded check:');
-    console.log('FeedbackData available:', typeof FeedbackData !== 'undefined');
-    console.log('FeedbackRender available:', typeof FeedbackRender !== 'undefined');
-    console.log('FeedbackAPI available:', typeof FeedbackAPI !== 'undefined');
-    console.log('ResultsFeedback available:', typeof ResultsFeedback !== 'undefined');
-    
-    // Ensure ResultsFeedback is available before rendering domain summaries
-    window.ensureResultsFeedbackAvailable = function(callback, token) {
-        // Store token globally for consistent access
-        window.token = token;
-        
-        // Use the global runId if available, otherwise use token
-        const runIdToUse = window.runId || token;
-        
-        if (window.ResultsFeedback) {
-            // Check if ResultsFeedback is already initialized
-            if (window.ResultsFeedback.isInitialized && window.ResultsFeedback.isInitialized()) {
-                callback();
-                return;
-            }
-            
-            // Initialize ResultsFeedback with the runId
-            window.ResultsFeedback.init(runIdToUse);
-            callback();
-            return;
-        }
-        
-        // If ResultsFeedback is not available, wait a bit and try again
-        setTimeout(function() {
-            if (window.ResultsFeedback) {
-                // Check if ResultsFeedback is already initialized
-                if (window.ResultsFeedback.isInitialized && window.ResultsFeedback.isInitialized()) {
-                    callback();
-                    return;
-                }
-                
-                // Initialize ResultsFeedback with the runId
-                window.ResultsFeedback.init(runIdToUse);
-                callback();
-            }
-        }, 500);
-    };
+    // Debug check for loaded modules if debug is enabled
+    if (window.AppConfig?.ui?.debug) {
+        console.log('Modules loaded check:');
+        console.log('FeedbackData available:', typeof FeedbackData !== 'undefined');
+        console.log('FeedbackRender available:', typeof FeedbackRender !== 'undefined');
+        console.log('FeedbackAPI available:', typeof FeedbackAPI !== 'undefined');
+        console.log('ResultsFeedback available:', typeof ResultsFeedback !== 'undefined');
+        console.log('ApiClient available:', typeof window.ApiClient !== 'undefined');
+    }
 </script>
 <script>
     // Load the navigation component
@@ -248,11 +276,8 @@
         }, 500);
     });
 </script>
-<script src="js/config.js"></script>
-<script>
-// Use centralized config for API URL
-const API_BASE_URL = window.AppConfig.api.baseUrl;
 
+<script>
 // --- Utility Functions --- //
 function getTokenFromUrl() {
     const params = new URLSearchParams(window.location.search);
@@ -468,10 +493,22 @@ function setupPdfExport(token) {
             exportButton.disabled = true;
             exportButton.innerHTML = '<span style="margin-right: 5px;">⏳</span> Generating PDF...';
             
-            // Use centralized config for API URL
-            const pdfUrl = `${window.AppConfig.api.baseUrl}/api/dmp/enriched-checklists/access/${encodeURIComponent(token)}/export-pdf`;
+            // Make sure ApiClient is properly initialized with authentication
+            if (!window.ApiClient) {
+                throw new Error('API client not initialized');
+            }
             
-            // Open in new tab instead of iframe for production API
+            // Ensure API client is using authentication
+            window.ApiClient.useAuthentication(true);
+            
+            // Get the PDF URL
+            const pdfEndpoint = `/api/dmp/enriched-checklists/access/${encodeURIComponent(token)}/export-pdf`;
+            
+            // Use the API client to get the PDF URL with authentication
+            const pdfUrl = await window.ApiClient.getAuthenticatedUrl(pdfEndpoint);
+            console.log('Generated authenticated PDF URL');
+            
+            // Open in new tab
             window.open(pdfUrl, '_blank');
             
             // Reset button after a delay
@@ -489,7 +526,7 @@ function setupPdfExport(token) {
 }
 
 // --- Main Logic --- //
-(async function() {
+function initResultsPage() {
     const token = getTokenFromUrl();
     // Store token globally for access by all modules
     window.token = token;
@@ -501,21 +538,43 @@ function setupPdfExport(token) {
         return;
     }
     
+    // Initialize the auth module with our configuration
+    if (window.AuthModule) {
+        console.log('Initializing AuthModule...');
+        // Make sure we're using the correct auth proxy URL and token endpoint
+        if (!window.AppConfig.auth.proxyUrl || !window.AppConfig.auth.tokenEndpoint) {
+            console.error('Auth configuration is missing required properties');
+        } else {
+            console.log('Auth configuration:', window.AppConfig.auth);
+        }
+    } else {
+        console.error('AuthModule not available!');
+    }
+    
+    // Fetch data after ensuring auth and API client are ready
+    fetchAndRenderData(token);
+}
+
+// Fetch and render data
+async function fetchAndRenderData(token) {
     try {
-        // Fetch enriched checklist data using the access token
-        const response = await fetch(`${window.AppConfig.api.baseUrl}/api/dmp/enriched-checklists/access/${encodeURIComponent(token)}`);
-        
-        if (!response.ok) {
-            throw new Error(`API returned ${response.status}: ${response.statusText}`);
+        // Make sure ApiClient is properly initialized with authentication
+        if (!window.ApiClient) {
+            throw new Error('API client not initialized');
         }
         
-        const data = await response.json();
+        console.log('API client available, configuring for authentication...');
+        // Ensure API client is using authentication
+        window.ApiClient.useAuthentication(true);
+        
+        // Fetch enriched checklist data using the API client
+        console.log(`Fetching data from ${window.AppConfig.api.baseUrl}/api/dmp/enriched-checklists/access/${encodeURIComponent(token)}`);
+        const data = await window.ApiClient.get(`/api/dmp/enriched-checklists/access/${encodeURIComponent(token)}`);
         console.log('Fetched data:', data);
         
         // For debugging
         const debugInfo = document.getElementById('debug-info');
         debugInfo.textContent = JSON.stringify(data, null, 2).substring(0, 1000) + '...';
-        
         // Normalize the data structure
         const normalizedData = FeedbackData.normalizeData(data);
         
@@ -600,13 +659,11 @@ function setupPdfExport(token) {
         // Use the local renderFeedbackNote function instead of FeedbackRender module
         renderFeedbackNote(feedbackNote);
         
-        // Ensure ResultsFeedback is available before rendering domains
-        window.ensureResultsFeedbackAvailable(function() {
-            console.log('ResultsFeedback is ready, rendering domains...');
-            // Render domain summaries and detailed domain analysis
-            FeedbackRender.renderDomainSummaries(normalizedData);
-            FeedbackRender.renderDomains(normalizedData, checklist);
-        });
+        // Directly render domains without checking ResultsFeedback availability
+        console.log('Rendering domains...');
+        // Render domain summaries and detailed domain analysis
+        FeedbackRender.renderDomainSummaries(normalizedData);
+        FeedbackRender.renderDomains(normalizedData, checklist);
         
         // Setup PDF export functionality
         setupPdfExport(token);
@@ -622,7 +679,7 @@ function setupPdfExport(token) {
         document.getElementById('error').querySelector('.error-message').textContent = `Failed to load analysis: ${err.message}`;
         document.getElementById('debug-info').style.display = 'block';
     }
-})();
+}
 
 // Function to update tab indicators based on domain results
 function updateTabIndicators(data) {

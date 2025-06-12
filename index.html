@@ -6,7 +6,6 @@
     <title>DMP Analyser</title>
     
     <!-- Performance hints for faster loading -->
-    <link rel="preconnect" href="https://dmp-token-proxy.azurewebsites.net">
     <link rel="preload" href="js/loader.js" as="script">
     <link rel="preload" href="js/config.js" as="script">
     <link rel="preload" href="js/auth.js" as="script">
@@ -19,23 +18,9 @@
             NODE_ENV: 'development',
             DEBUG: 'true',
             
-            // API Configuration
-            API_BASE_URL: 'https://dmp-apim.azure-api.net',
-            API_TIMEOUT: '30000',
-            API_RETRIES: '3',
-            
-            // Auth Configuration
-            AUTH_PROXY_URL: 'https://dmp-token-proxy.azurewebsites.net',
-            AUTH_PROXY_TOKEN_ENDPOINT: '/token',
-            AZURE_CLIENT_ID: '2e93d7f3-7e47-4767-ac3b-9f19e9e57784',
-            AZURE_TENANT_ID: 'f592cb5f-b8bc-41b9-901f-9a99ab84afa6',
-            // For client credentials flow, must use .default suffix
-            AZURE_API_SCOPE: 'api://2fb1d88c-02fe-4a8e-9f8d-dadbc9380dc3/.default',
-            
             // UI Configuration
             UI_DEBUG: 'true',
-            SHOW_API_STATUS: 'true',
-            DEFAULT_CHECKLIST_ID: 'finnish_dmp_evaluation'
+            SHOW_API_STATUS: 'true'
         };
     </script>
     

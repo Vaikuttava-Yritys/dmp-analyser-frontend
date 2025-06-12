@@ -57,8 +57,8 @@ class ApiClient {
     const url = `${this.baseUrl}${endpoint}`;
     
     // Get configuration from AppConfig
-    const timeout = window.AppConfig?.api?.timeout || 30000; // Default 30s timeout
-    const maxRetries = window.AppConfig?.api?.retries || 3; // Default 3 retries
+    const timeout = window.AppConfig?.api?.timeout_ms || window.AppConfig?.api?.API_TIMEOUT_MS || 30000; // Default 30s timeout
+    const maxRetries = window.AppConfig?.api?.maxRetries || window.AppConfig?.api?.API_MAX_RETRIES || 3; // Default 3 retries
     
     // Set default headers
     const headers = {
@@ -188,6 +188,32 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  }
+
+  /**
+   * Get a URL with authentication token appended as a query parameter
+   * This is useful for resources that can't use Authorization headers (like PDF downloads)
+   * @param {string} endpoint - API endpoint
+   * @returns {Promise<string>} - URL with auth token
+   */
+  async getAuthenticatedUrl(endpoint) {
+    const url = `${this.baseUrl}${endpoint}`;
+    
+    // If authentication is not enabled, return the URL as is
+    if (!this.useAuth) {
+      return url;
+    }
+    
+    // Get the authentication token
+    const token = await this.getAuthToken();
+    if (!token) {
+      console.warn('No auth token available for authenticated URL');
+      return url;
+    }
+    
+    // Add token as a query parameter
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}access_token=${encodeURIComponent(token)}`;
   }
 }
 

@@ -24,7 +24,8 @@ window.ENV = window.ENV || {
 };
 
 // App version for cache busting
-const APP_VERSION = '1.1.0';
+window.DMP_LOADER = window.DMP_LOADER || {};
+window.DMP_LOADER.APP_VERSION = '1.1.0';
 
 /**
  * Promise-based script loader
@@ -34,7 +35,7 @@ const APP_VERSION = '1.1.0';
  */
 function loadScript(url, addVersion = true) {
   // Add cache-busting version parameter if needed
-  const scriptUrl = addVersion ? `${url}?v=${APP_VERSION}` : url;
+  const scriptUrl = addVersion ? `${url}?v=${window.DMP_LOADER.APP_VERSION}` : url;
   
   // Return immediately if already loaded
   if (window.DMP_SCRIPTS_LOADED[scriptUrl]) {

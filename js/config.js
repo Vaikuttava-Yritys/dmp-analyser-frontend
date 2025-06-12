@@ -44,7 +44,7 @@ function initializeConfig() {
     
     // Auth Configuration
     auth: {
-      proxyUrl: window.ENV.AUTH_PROXY_URL || 'https://dmp-token-proxy.azurewebsites.net',
+      proxyUrl: window.ENV.AUTH_PROXY_URL || 'https://dmp-apim.azure-api.net/token-proxy',
       tokenEndpoint: window.ENV.AUTH_PROXY_TOKEN_ENDPOINT || '/token',
       clientId: window.ENV.AZURE_CLIENT_ID || '2e93d7f3-7e47-4767-ac3b-9f19e9e57784',
       tenantId: window.ENV.AZURE_TENANT_ID || 'f592cb5f-b8bc-41b9-901f-9a99ab84afa6',
