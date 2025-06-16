@@ -105,6 +105,8 @@
     </div>
 
     <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
     <script>
         // Store feedback in local storage as fallback
         const STORAGE_KEY = 'reproai_feedback';
@@ -127,11 +129,17 @@
         // Initialize API configuration
         const initializeApiConfig = async () => {
             await waitForAppConfig();
+            
+            // Set API base URL and endpoints
             API_BASE = window.AppConfig.api.baseUrl;
             FEEDBACK_ENDPOINT = window.AppConfig.api.endpoints.feedback;
-            console.log('API configuration initialized:', { API_BASE, FEEDBACK_ENDPOINT });
             
-            // Load feedback after configuration is ready
+            // Initialize API client with authentication
+            if (window.ApiClient) {
+                window.ApiClient.useAuthentication(true);
+            }
+            
+            // Load existing feedback
             loadFeedback();
         };
         
@@ -200,28 +208,33 @@
             };
             
             try {
-                // Send to API
-                const response = await fetch(`${API_BASE}${FEEDBACK_ENDPOINT}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(feedbackData),
-                    mode: 'cors',
-                    credentials: 'same-origin'
-                });
+                // Send to API using ApiClient with authentication
+                if (window.ApiClient) {
+                    await window.ApiClient.post(FEEDBACK_ENDPOINT, feedbackData);
+                } else {
+                    // Fallback to direct fetch if ApiClient is not available
+                    const response = await fetch(`${API_BASE}${FEEDBACK_ENDPOINT}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(feedbackData),
+                        mode: 'cors',
+                        credentials: 'same-origin'
+                    });
+                    
+                    if (!response.ok) {
+                        // If API call fails, save to local storage as fallback
+                        const errorData = await response.json();
+                        console.error('API Error:', errorData);
+                        saveToLocalStorage(email, feedback);
+                        throw new Error(`API Error: ${response.status} - ${errorData.detail || 'Unknown error'}`); 
+                    }
+                }
                 
                 // Hide spinner
                 document.getElementById('spinner-overlay').style.display = 'none';
-                
-                if (!response.ok) {
-                    // If API call fails, save to local storage as fallback
-                    const errorData = await response.json();
-                    console.error('API Error:', errorData);
-                    saveToLocalStorage(email, feedback);
-                    throw new Error(`API Error: ${response.status} - ${errorData.detail || 'Unknown error'}`); 
-                }
                 
                 // Show success message
                 document.getElementById('success-message').style.display = 'block';
@@ -234,6 +247,9 @@
                 
                 // Hide spinner
                 document.getElementById('spinner-overlay').style.display = 'none';
+                
+                // Save to local storage as fallback
+                saveToLocalStorage(email, feedback);
                 
                 // Show error message
                 document.getElementById('error-message').textContent = `Error: ${error.message}. Your feedback was saved locally.`;
