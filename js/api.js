@@ -62,7 +62,8 @@ class ApiClient {
     
     // Set default headers
     const headers = {
-      'Content-Type': 'application/json',
+      // Only set default Content-Type if not explicitly set or undefined in options
+      ...(options.headers?.['Content-Type'] === undefined && !(options.body instanceof FormData) ? {'Content-Type': 'application/json'} : {}),
       ...options.headers,
     };
 
@@ -188,6 +189,30 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  }
+  
+  /**
+   * Post FormData to an endpoint without JSON stringifying
+   * This is useful for file uploads
+   * @param {string} endpoint - API endpoint
+   * @param {FormData} formData - FormData object
+   * @param {Object} options - Additional fetch options
+   * @returns {Promise<Object>} - Parsed JSON response
+   */
+  async postForm(endpoint, formData, options = {}) {
+    // Don't set Content-Type for FormData, browser will set it with boundary
+    const fetchOptions = {
+      ...options,
+      method: 'POST',
+      body: formData,
+      headers: {
+        // Explicitly remove Content-Type so browser can set it with proper boundary
+        ...(options.headers || {}),
+        'Content-Type': undefined
+      }
+    };
+    
+    return this.request(endpoint, fetchOptions);
   }
 
   /**

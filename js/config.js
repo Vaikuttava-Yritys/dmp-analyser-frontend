@@ -3,9 +3,6 @@
  * 
  * This file is the SINGLE SOURCE OF TRUTH for all application configuration.
  * All other files should reference this configuration object.
- * 
- * In development, values are read from window.ENV which is populated in HTML files.
- * In production, these values should be injected during the build process.
  */
 
 /**
@@ -32,6 +29,7 @@ function initializeConfig() {
       endpoints: {
         health: '/health',
         analyze: '/api/dmp/enriched-checklists/analyze',
+        uploadPdf: '/api/dmp/enriched-checklists/upload-pdf', // Dedicated endpoint for PDF uploads
         status: '/api/dmp/enriched-checklists/run/',
         results: '/api/dmp/enriched-checklists/results/',
         checklists: '/api/dmp/checklists',
@@ -48,7 +46,8 @@ function initializeConfig() {
       tokenEndpoint: window.ENV.AUTH_PROXY_TOKEN_ENDPOINT || '/token',
       clientId: window.ENV.AZURE_CLIENT_ID || '2e93d7f3-7e47-4767-ac3b-9f19e9e57784',
       tenantId: window.ENV.AZURE_TENANT_ID || 'f592cb5f-b8bc-41b9-901f-9a99ab84afa6',
-      apiScope: window.ENV.AZURE_API_SCOPE || 'api://2fb1d88c-02fe-4a8e-9f8d-dadbc9380dc3/.default'
+      apiScope: window.ENV.AZURE_API_SCOPE || 'api://2fb1d88c-02fe-4a8e-9f8d-dadbc9380dc3/.default',
+      bypassAuthInDev: window.ENV.BYPASS_AUTH_IN_DEV === 'true' || false
     },
     
     // UI Configuration

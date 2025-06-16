@@ -2,31 +2,45 @@
 
 ## Overview
 
-The DMP Analyser system consists of three main components that need to be deployed in the client's Azure environment:
+The DMP Analyser system consists of four main components deployed in Azure.
+Architecture now supports secure token issuance and role-based access to API via Azure AD and APIM.
 
-1. **API Backend**: Hosted on Azure Container Apps
-2. **Database**: MongoDB Atlas cloud service (can be migrated to Azure CosmosDB)
-3. **Frontend**: Hosted on Azure Static Web Apps
-
-This document provides a comprehensive guide for Azure administrators to deploy and maintain the DMP Analyser system in their own Azure environment.
+1. **Frontend** – Azure Static Web Apps  
+2. **API Backend** – Azure Container Apps  
+3. **Database** – MongoDB Atlas (or Azure CosmosDB)  
+4. **Token Proxy** – Azure Web App (secured via Azure API Management)
 
 ## Architecture Diagram
 
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│                 │     │                 │     │                 │
-│   Frontend      │────▶│   API Backend   │────▶│   Database      │
-│   Azure Static  │     │   Azure         │     │   MongoDB Atlas │
-│   Web Apps      │◀────│   Container Apps│◀────│                 │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-                               │
-                               ▼
-                        ┌─────────────────┐
-                        │                 │
-                        │   LLM Services  │
-                        │   (OpenAI &     │
-                        │   Anthropic)    │
-                        └─────────────────┘
+┌────────────────────┐                ┌────────────────────┐                ┌─────────────────┐
+│                    │                │                    │                │                 │
+│   Frontend (SPA)   │───────────────▶│   API Backend      │───────────────▶│   MongoDB Atlas │
+│   Azure Static Web │                │   Azure Container  │                │   or CosmosDB   │
+└─────────┬──────────┘                └─────────┬──────────┘                └─────────────────┘
+          │                                     │                                     ▲
+          │                                     │                                     │
+          │                                     ▼                                     │
+          │                           ┌────────────────────┐                          │
+          │                           │                    │                          │
+          │                           │   LLM Services     │                          │
+          │                           │   OpenAI/Anthropic │                          │
+          │                           └────────────────────┘                          │
+          │                                                                           │
+          ▼                                                                           │
+┌────────────────────┐                                                                │
+│                    │                                                                │
+│   Token Proxy      │◀──────────────────────────────────────────────────────────────┘
+│   Azure Web App    │
+└─────────┬──────────┘
+          ▲
+          │
+          ▼
+┌────────────────────┐
+│                    │
+│   Azure API Mgmt   │
+│  (Public Entrypoint)│
+└────────────────────┘
 ```
 
 ## Components
@@ -85,6 +99,25 @@ This document provides a comprehensive guide for Azure administrators to deploy 
   - Minimum M10 tier on MongoDB Atlas or equivalent
   - 10GB storage minimum (scales with usage)
 
+### Token Proxy (Azure Web App)
+
+**Purpose**: To securely acquire Azure AD tokens from the frontend without exposing client secrets.
+
+### Deployment
+
+- **Technology**: Node.js with Express + MSAL
+- **Hosted on**: Azure App Service (Linux Web App)
+- **Secured via**: Azure API Management (APIM)
+
+### Token Flow
+
+1. Frontend sends a GET request to `/token-proxy/token` (via APIM)
+2. APIM forwards to the Azure Web App (Token Proxy)
+3. Token Proxy requests an Azure AD token using `client_credentials` flow
+4. Token is returned to frontend (used to authenticate backend API calls)
+
+
+
 ## Integration Points
 
 1. **Frontend to API**: 
@@ -92,24 +125,33 @@ This document provides a comprehensive guide for Azure administrators to deploy 
    - Token-based authentication for accessing shared results
    - CORS configuration required (see Environment Configuration section)
 
-2. **API to Database**:
+2. **Frontend ↔ Token Proxy**
+
+- URL: `xxx`
+- **CORS**: Configured via `ALLOWED_ORIGINS` in Web App settings
+- **No subscription key** needed for this endpoint 
+
+3. **Frontend ↔ API Backend**
+
+- Secured with token acquired from proxy
+- RESTful endpoints for submitting and fetching DMP analysis
+
+4. **API to Database**:
    - Asynchronous MongoDB connections
    - Data storage and retrieval for analyses and manuscripts
    - Connection string provided via environment variables
 
-3. **API to External Services**:
+5. **API to External Services**:
    - OpenAI API and Anthropic API for LLM-based analysis
    - API keys required (see Environment Configuration section)
 
 ## Security Considerations
 
 - API endpoints use token-based authentication for shared results
-- MongoDB connection strings and API keys must be stored as secure environment variables
-- Azure Container Apps provide built-in security features
-- CORS is configured to allow only specific origins
-- All API keys should be rotated regularly
-- Database credentials should use least-privilege access
-- TLS encryption is required for all connections
+- Only the Token Proxy can request Azure AD tokens with `client_credentials`
+- Secrets are never exposed to the frontend
+- CORS is strictly configured
+- Future options: rate limiting and IP filtering via APIM
 
 ## Monitoring and Logging
 
@@ -132,17 +174,16 @@ This document provides a comprehensive guide for Azure administrators to deploy 
 
 ## Environment Configuration
 
-### Required Environment Variables
+## Environment Configuration
 
-| Variable | Description | Example |
-|----------|-------------|--------|
-| `ENV` | Environment name | `production` |
-| `MONGODB_URI` | MongoDB connection string | `mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority` |
-| `MONGODB_DB_NAME` | Database name | `dmp-analyser-prod` |
-| `OPENAI_API_KEY` | OpenAI API key | `sk-...` |
-| `ANTHROPIC_API_KEY` | Anthropic API key (optional) | `sk-ant-...` |
-| `ALLOWED_ORIGINS` | CORS allowed origins | `["https://your-frontend-domain.com"]` |
-| `API_KEY` | API key for admin operations | `your-secure-api-key` |
+| Variable           | Description                          | Example                                                   |
+|--------------------|--------------------------------------|-----------------------------------------------------------|
+| `CLIENT_ID`        | Azure AD App Registration            | `2e93d7f3-7e47-4767-ac3b-9f19e9e57784`                    |
+| `TENANT_ID`        | Azure AD Tenant ID                   | `f592cb5f-b8bc-41b9-901f-9a99ab84afa6`                    |
+| `CLIENT_SECRET`    | Azure App Client Secret              | *(stored securely)*                                       |
+| `API_SCOPE`        | DMP API Scope                        | `api://.../.default`                                     |
+| `ALLOWED_ORIGINS`  | CORS Origins for Proxy               | `http://localhost:3000,https://green-plant...`            |
+| `PORT`             | Proxy Port (local dev)               | `3001`                                                    |
 
 ## Deployment Instructions
 
@@ -164,6 +205,11 @@ This document provides a comprehensive guide for Azure administrators to deploy 
    - Connect to existing GitHub repository
    - Configure build settings according to repository structure
    - Add API URL as environment variable during build
+
+5. **Token Proxy Deployment**:
+
+- **Token Proxy** deployed from GitHub using CI/CD via Azure Web Apps
+- **Frontend** uses APIM endpoint (`xxx`) to obtain token
 
 4. **Testing**:
    - Verify frontend can connect to API

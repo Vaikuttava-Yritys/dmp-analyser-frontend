@@ -4,25 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DMP Analyser</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
     
     <!-- Performance hints for faster loading -->
     <link rel="preload" href="js/loader.js" as="script">
     <link rel="preload" href="js/config.js" as="script">
     <link rel="preload" href="js/auth.js" as="script">
-    <!-- Inject environment variables - Single source of truth -->
-    <script>
-        // This is the ONLY place where environment variables should be defined
-        // All other files should read from window.AppConfig after config.js initializes it
-        window.ENV = {
-            // Environment
-            NODE_ENV: 'development',
-            DEBUG: 'true',
-            
-            // UI Configuration
-            UI_DEBUG: 'true',
-            SHOW_API_STATUS: 'true'
-        };
-    </script>
+    <!-- Load environment variables from env.js (generated from .env file) -->
+    <script src="env.js"></script>
+    <!-- Note: window.ENV is now loaded from env.js which is generated from .env file -->
+    <!-- All other files should read from window.AppConfig after config.js initializes it -->
     
     <!-- Script loader - handles all dependencies with defer -->
     <script src="js/loader.js" defer></script>
@@ -174,40 +165,37 @@
             margin-bottom: 20px;
         }
         
+        /* Tab styling */
         .tab-buttons {
             display: flex;
-            margin-bottom: 0;
             border-bottom: 1px solid #dee2e6;
-            width: 100%;
         }
         
         .tab-button {
-            padding: 12px 24px;
-            background-color: #f5f5f5;
+            flex: 1;
+            text-align: center;
+            padding: 12px 0;
+            background: #f5f5f5;
             border: none;
-            margin-right: 2px;
-            cursor: pointer;
-            font-weight: 400;
-            transition: all 0.2s ease;
             border-radius: 4px 4px 0 0;
             color: #6c757d;
-            position: relative;
+            transition: background 0.2s;
+            cursor: pointer;
+            font-weight: 400;
             outline: none;
-            text-align: left;
-            width: auto;
         }
         
-        .tab-button:hover {
-            background-color: #f8f9fa;
+        .tab-button:hover:not(.active) {
+            background: #f8f9fa;
             color: #495057;
         }
         
         .tab-button.active {
-            background-color: #ffffff;
-            color: #495057;
+            background: #fff;
+            color: #0057b8;
             font-weight: 600;
-            border-bottom: 2px solid #6c757d;
-            margin-bottom: -1px;
+            border-bottom: 2px solid #0057b8;
+            margin-bottom: -2px;
         }
         
         .tab-content {
@@ -244,7 +232,6 @@
     <div class="container">
         <!-- Include the navigation component -->
         <div id="navigation-placeholder"></div>
-        <h1>DMP Analyser</h1>
         <div class="grey-box">
             <div class="feedback-pdf-row">
                 <div class="feedback-prompt">
@@ -312,6 +299,18 @@
                     </div>
                 </div>
                 
+                <div class="form-group">
+                    <label for="analysis-context">Additional context for the analysis:</label>
+                    <textarea 
+                      id="analysis-context" 
+                      rows="4" 
+                      placeholder="Add any additional context about the DMP that might help with the analysis"
+                    ></textarea>
+                </div>
+
+                <!-- Error message container -->
+                <div id="error-message" class="form-text text-danger" style="display:none; color: #dc3545; margin: 10px 0; padding: 10px; border: 1px solid #dc3545; border-radius: 4px; background-color: #f8d7da;"></div>
+                
                 <button type="submit" id="submit-btn">Run Analysis</button>
                 
                 <div class="info-box">
@@ -322,22 +321,25 @@
         </div>
         <div id="analysis-status" style="display: none;">
             <h2>Analysis Submitted</h2>
+            <div class="spinner" style="margin: 20px auto; display: none;"></div>
             <p id="status-message">Your DMP analysis has been submitted successfully!</p>
-            <div class="email-notification-box">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                <p>You will receive an email when your analysis is ready.</p>
+            <div class="email-notification-box" style="display: none; align-items: center; background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 10px; color: #0057b8;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                <p style="margin: 0;">You will receive an email when your analysis is ready.</p>
             </div>
         </div>
         <div id="analysis-result" style="display: none;">
-            <h2>Analysis Complete</h2>
+            <h2>Analysis In Progress</h2>
             <div class="grey-box">
-                <p>Your analysis is ready. View your results here:</p>
-                <div class="result-link-container">
-                    <a id="results-direct-link" href="#" class="primary-link" target="_blank">View Results</a>
+                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0057b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 10px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <p style="margin: 0; font-weight: bold;">Your analysis is being processed</p>
                 </div>
                 
+                <p>This may take several minutes. You'll receive an email when results are ready.</p>
+                
                 <div class="shareable-link-container">
-                    <p><strong>Shareable link:</strong></p>
+                    <p><strong>Results link</strong></p>
                     <div class="copy-link-box">
                         <input type="text" id="shareable-link" readonly>
                         <button id="copy-link-btn" class="copy-button" title="Copy to clipboard">
@@ -345,13 +347,6 @@
                         </button>
                     </div>
                     <p class="copy-success" id="copy-success-message">Link copied to clipboard!</p>
-                </div>
-                
-                <div class="pdf-export-container">
-                    <button id="export-pdf-btn" class="export-button pdf-button">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: text-bottom;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="15 15 12 18 9 15"></polyline></svg>
-                        PDF Report
-                    </button>
                 </div>
             </div>
         </div>
@@ -374,11 +369,14 @@
                     const statusElement = document.getElementById('api-status');
                     if (statusElement) {
                         if (isHealthy) {
-                            statusElement.textContent = '✅ API Connected';
-                            statusElement.className = 'connected';
+                            // Hide the status element when API is connected
+                            statusElement.textContent = '';
+                            statusElement.style.display = 'none';
                         } else {
+                            // Only show when API is disconnected
                             statusElement.textContent = '❌ API Disconnected';
                             statusElement.className = 'disconnected';
+                            statusElement.style.display = 'block';
                         }
                     }
                 });
@@ -419,75 +417,466 @@
                 });
             });
             
-            // Form validation and submission handling
+            // Initialize API client with authentication
+            const apiClient = new ApiClient(window.AppConfig.api.baseUrl);
+            apiClient.useAuthentication(true);
+            
+            // Set up form submission handler
             const form = document.getElementById('dmp-form');
-            const submitButton = document.getElementById('submit-button');
-            const resultContainer = document.getElementById('result-container');
             const errorContainer = document.getElementById('error-message');
             
+            // Helper function to show errors
+            function showError(message) {
+                if (errorContainer) {
+                    errorContainer.textContent = message;
+                    errorContainer.style.display = 'block';
+                } else {
+                    console.error('Error:', message);
+                    alert('Error: ' + message);
+                }
+            }
+            
             if (form) {
-                form.addEventListener('submit', async function(event) {
+                form.addEventListener('submit', async (event) => {
                     event.preventDefault();
                     
-                    // Clear previous errors
+                    // Clear any previous error messages
                     if (errorContainer) {
                         errorContainer.textContent = '';
                         errorContainer.style.display = 'none';
                     }
                     
-                    // Get form data
-                    const formData = new FormData(form);
-                    const textInput = document.getElementById('text-input').value.trim();
+                    // Get form elements
                     const fileInput = document.getElementById('pdf-file');
-                    
-                    // Validate inputs
-                    if (textInput === '' && (!fileInput.files || fileInput.files.length === 0)) {
-                        if (errorContainer) {
-                            errorContainer.textContent = 'Please provide either text input or upload a PDF file.';
-                            errorContainer.style.display = 'block';
-                        }
-                        return;
-                    }
+                    const textInput = document.getElementById('text-input');
+                    const submitButton = document.getElementById('submit-btn');
+                    const statusContainer = document.getElementById('analysis-status');
+                    const statusMessage = document.getElementById('status-message');
                     
                     try {
-                        // Disable submit button during processing
+                        // Validate inputs
+                        if (fileInput.files.length > 0 && textInput.value.trim().length > 0) {
+                            throw new Error('Please provide either a PDF file OR text input, not both.');
+                        }
+                        
+                        if (fileInput.files.length === 0 && textInput.value.trim().length === 0) {
+                            throw new Error('Please provide either a PDF file OR text input.');
+                        }
+                        
+                        // Check file size if a file is uploaded (max 10MB)
+                        if (fileInput.files.length > 0) {
+                            const maxSizeBytes = 10 * 1024 * 1024; // 10MB
+                            if (fileInput.files[0].size > maxSizeBytes) {
+                                throw new Error('PDF file size exceeds the maximum allowed (10MB).');
+                            }
+                        }
+                        
+                        // Begin submission - update UI
                         if (submitButton) {
                             submitButton.disabled = true;
                             submitButton.textContent = 'Processing...';
                         }
                         
-                        // Show loading indicator
-                        if (resultContainer) {
-                            resultContainer.innerHTML = '<div class="spinner"></div><p>Analyzing data, please wait...</p>';
-                            resultContainer.style.display = 'block';
+                        // Hide form container and show status container
+                        document.getElementById('analysis-form').style.display = 'none';
+                        if (statusContainer) {
+                            statusContainer.style.display = 'block';
+                            
+                            // Show spinner inside status container
+                            const spinnerElement = statusContainer.querySelector('.spinner');
+                            if (spinnerElement) spinnerElement.style.display = 'block';
+                            
+                            // Hide email notification during submission
+                            const emailBox = statusContainer.querySelector('.email-notification-box');
+                            if (emailBox) emailBox.style.display = 'none';
                         }
                         
-                        // Send data to API using authenticated client
-                        const response = await apiClient.post('/api/analyze', formData);
+                        // Update status message
+                        if (statusMessage) statusMessage.textContent = 'Submitting your analysis, please wait...';
                         
-                        // Handle response
-                        if (response.ok) {
-                            const data = await response.json();
-                            if (resultContainer) {
-                                resultContainer.innerHTML = `<h3>Analysis Results</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                        // Get form values
+                        const userEmail = document.getElementById('user-email').value;
+                        const checklistId = document.getElementById('checklist-select').value;
+                        const configId = document.getElementById('config-select').value;
+                        
+                        // Validate required fields
+                        if (!configId) {
+                            throw new Error('Please select an analysis configuration');
+                        }
+                        
+                        if (!checklistId) {
+                            throw new Error('Please select assessment criteria');
+                        }
+                        
+                        if (!userEmail) {
+                            throw new Error('Please enter your email address');
+                        }
+                        
+                        // Basic email validation
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailRegex.test(userEmail)) {
+                            throw new Error('Please enter a valid email address');
+                        }
+                        
+                        // Clear any previous results
+                        const analysisResult = document.getElementById('analysis-result');
+                        if (analysisResult) {
+                            analysisResult.style.display = 'none';
+                            const resultLink = document.getElementById('results-direct-link');
+                            const shareableLink = document.getElementById('shareable-link');
+                            if (resultLink) resultLink.href = '#';
+                            if (shareableLink) shareableLink.value = '';
+                        }
+                        
+                        // Create metadata object (used for both PDF and text submissions)
+                        const metadata = {
+                            source: 'web-ui',
+                            timestamp: new Date().toISOString(),
+                            browser: navigator.userAgent
+                        };
+                        
+                        // Determine which endpoint to use based on input type
+                        const isPdfUpload = fileInput.files && fileInput.files.length > 0;
+                        let endpoint = isPdfUpload ? '/api/dmp/enriched-checklists/upload-pdf' : window.AppConfig.api.endpoints.analyze;
+                        
+                        let response;
+                        
+                        // Handle submission based on input type
+                        if (isPdfUpload) {
+                            try {
+                                // Set endpoint for PDF upload
+                                endpoint = '/api/dmp/enriched-checklists/upload-pdf';
+                                
+                                // Create FormData for PDF upload
+                                const pdfFormData = new FormData();
+                                
+                                // Add the PDF file with the correct field name expected by the backend
+                                pdfFormData.append('pdf_file', fileInput.files[0]);
+                                
+                                // Get analysis context if provided
+                                const analysisContext = document.getElementById('analysis-context').value.trim();
+                                if (analysisContext) {
+                                    pdfFormData.append('analysis_context', analysisContext);
+                                    console.log('Analysis Context:', analysisContext);
+                                }
+                                
+                                // Add metadata fields individually with dot notation
+                                Object.entries(metadata).forEach(([key, value]) => {
+                                    pdfFormData.append(`metadata.${key}`, value);
+                                });
+                                
+                                // Debug: Log what we're sending
+                                console.log('PDF Upload Endpoint:', endpoint);
+                                console.log('PDF File:', fileInput.files[0].name, '(', fileInput.files[0].size, 'bytes )');
+                                console.log('Config ID:', configId);
+                                console.log('Checklist ID:', checklistId);
+                                console.log('User Email:', userEmail);
+                                console.log('Metadata:', metadata);
+                                
+                                // Log form data contents (can't directly log FormData)
+                                console.log('FormData Contents:');
+                                for (const pair of pdfFormData.entries()) {
+                                    console.log(pair[0] + ': ' + (pair[1] instanceof File ? `File: ${pair[1].name}` : pair[1]));
+                                }
+                                
+                                // Build URL with required checklist_id as query parameter
+                                const uploadUrl = new URL(`${window.AppConfig.api.baseUrl}${endpoint}`);
+                                uploadUrl.searchParams.append('checklist_id', checklistId);
+                                
+                                // Add config_id as query parameter
+                                uploadUrl.searchParams.append('config_id', configId);
+                                
+                                // Add user_email as query parameter to ensure it's properly received
+                                uploadUrl.searchParams.append('user_email', userEmail);
+                                console.log('Full Upload URL:', uploadUrl.toString());
+                                
+                                // Collect form data fields for logging
+                                const formDataFields = {};
+                                for (const pair of pdfFormData.entries()) {
+                                    formDataFields[pair[0]] = pair[1] instanceof File ? 
+                                        `File: ${pair[1].name} (${pair[1].size} bytes)` : pair[1];
+                                }
+                                
+                                // Log full request details as JSON
+                                console.log('Full Request Details:', JSON.stringify({
+                                    url: uploadUrl.toString(),
+                                    method: 'POST',
+                                    headers: {
+                                        'Authorization': 'Bearer [TOKEN]' // Don't log actual token
+                                    },
+                                    formData: formDataFields,
+                                    queryParams: {
+                                        checklist_id: checklistId,
+                                        config_id: configId,
+                                        user_email: userEmail
+                                    }
+                                }, null, 2));
+                                
+                                // Get auth token - with error handling
+                                const token = await window.AuthModule.getAccessToken();
+                                if (!token) {
+                                    throw new Error('Failed to get authentication token. Please try again or contact support.');
+                                }
+                                
+                                // Log the final URL right before making the request
+                                console.log('Final Upload URL (right before fetch):', uploadUrl.toString());
+                                
+                                // Make the fetch request with authentication
+                                const fetchResponse = await fetch(uploadUrl.toString(), {
+                                    method: 'POST',
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`
+                                    },
+                                    body: pdfFormData,
+                                    credentials: 'include'  // Important for CORS with credentials
+                                });
+                                
+                                if (!fetchResponse.ok) {
+                                    // Try to get more details about the error
+                                    const errorText = await fetchResponse.text();
+                                    console.error('PDF Upload Error:', fetchResponse.status, errorText);
+                                    throw new Error(`API error: ${fetchResponse.status} ${fetchResponse.statusText}\nDetails: ${errorText}`);
+                                }
+                                
+                                // Parse the response
+                                response = await fetchResponse.json();
+                                console.log('PDF Upload Response:', response);
+                            } catch (pdfError) {
+                                console.error('PDF Upload Error:', pdfError);
+                                throw pdfError; // Re-throw to be caught by the outer try-catch
                             }
                         } else {
-                            throw new Error(`API error: ${response.status} ${response.statusText}`);
+                            try {
+                                // Set endpoint for text analysis
+                                endpoint = '/api/dmp/enriched-checklists/analyze';
+                                
+                                // Create request body according to API specification
+                                const requestBody = {
+                                    checklist_id: checklistId,
+                                    text: textInput.value.trim(),
+                                    config_id: configId || 'dmp_with_pdf',
+                                    user_email: userEmail,
+                                    metadata: metadata
+                                };
+                                
+                                // Add analysis context if provided
+                                const analysisContext = document.getElementById('analysis-context').value.trim();
+                                if (analysisContext) {
+                                    requestBody.analysis_context = analysisContext;
+                                    console.log('Analysis Context:', analysisContext);
+                                }
+                                
+                                // Debug: Log what we're sending
+                                console.log('Text Analysis Endpoint:', endpoint);
+                                console.log('Text Analysis Payload:', requestBody);
+                                
+                                // Log full request details as JSON
+                                console.log('Text Analysis Request:', JSON.stringify({
+                                    url: `${window.AppConfig.api.baseUrl}${endpoint}`,
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': 'Bearer [TOKEN]' // Don't log actual token
+                                    },
+                                    body: requestBody
+                                }, null, 2));
+                                
+                                // Get auth token - with error handling
+                                const token = await window.AuthModule.getAccessToken();
+                                if (!token) {
+                                    throw new Error('Failed to get authentication token. Please try again or contact support.');
+                                }
+                                
+                                // Make the fetch request with authentication
+                                const fetchResponse = await fetch(`${window.AppConfig.api.baseUrl}${endpoint}`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${token}`
+                                    },
+                                    body: JSON.stringify(requestBody),
+                                    credentials: 'include'  // Important for CORS with credentials
+                                });
+                                
+                                if (!fetchResponse.ok) {
+                                    // Try to get more details about the error
+                                    const errorText = await fetchResponse.text();
+                                    console.error('Text Analysis Error:', fetchResponse.status, errorText);
+                                    throw new Error(`API error: ${fetchResponse.status} ${fetchResponse.statusText}\nDetails: ${errorText}`);
+                                }
+                                
+                                // Parse the response
+                                response = await fetchResponse.json();
+                                console.log('Text Analysis Response:', response);
+                            } catch (textAnalysisError) {
+                                console.error('Text Analysis Error:', textAnalysisError);
+                                throw textAnalysisError; // Re-throw to be caught by the outer try-catch
+                            }
+                        }
+                        
+                        // Process the response
+                        console.log('API Response:', response);
+                        
+                        // Handle different response formats safely
+                        if (response) {
+                            // Check for access_token (new API format)
+                            if (response.access_token) {
+                                // Show the result link with the access_token
+                                const resultUrl = `https://green-plant-0d15bda03.6.azurestaticapps.net/results.html?token=${response.access_token}`;
+                                const resultLink = document.getElementById('results-direct-link');
+                                const shareableLink = document.getElementById('shareable-link');
+                                const analysisResult = document.getElementById('analysis-result');
+                                
+                                if (resultLink) resultLink.href = resultUrl;
+                                if (shareableLink) shareableLink.value = resultUrl;
+                                
+                                // Hide status and show result
+                                if (statusContainer) statusContainer.style.display = 'none';
+                                if (analysisResult) analysisResult.style.display = 'block';
+                                
+                                // Set up copy button
+                                const copyBtn = document.getElementById('copy-link-btn');
+                                const copyMsg = document.getElementById('copy-success-message');
+                                
+                                if (copyBtn && copyMsg && shareableLink) {
+                                    // Remove any existing event listeners to prevent duplicates
+                                    // Instead of cloning, remove old listeners and add new ones
+                                    const copyHandler = () => {
+                                        shareableLink.select();
+                                        try {
+                                            // Use modern clipboard API with fallback
+                                            if (navigator.clipboard) {
+                                                navigator.clipboard.writeText(shareableLink.value);
+                                            } else {
+                                                document.execCommand('copy');
+                                            }
+                                            copyMsg.style.display = 'block';
+                                            setTimeout(() => {
+                                                copyMsg.style.display = 'none';
+                                            }, 3000);
+                                        } catch (clipboardError) {
+                                            console.error('Failed to copy:', clipboardError);
+                                        }
+                                    };
+                                    
+                                    // Remove old listeners by cloning without events but preserve the ID
+                                    const newCopyBtn = copyBtn.cloneNode(false);
+                                    copyBtn.parentNode.replaceChild(newCopyBtn, copyBtn);
+                                    
+                                    // Add the event listener with the once option for automatic cleanup
+                                    newCopyBtn.addEventListener('click', copyHandler);
+                                }
+                                
+                            }
+                            // Check for token (legacy format)
+                            else if (response.token) {
+                                // Show the result link
+                                const resultUrl = `https://green-plant-0d15bda03.6.azurestaticapps.net/results.html?token=${response.token}`;
+                                const resultLink = document.getElementById('results-direct-link');
+                                const shareableLink = document.getElementById('shareable-link');
+                                const analysisResult = document.getElementById('analysis-result');
+                                
+                                if (resultLink) resultLink.href = resultUrl;
+                                if (shareableLink) shareableLink.value = resultUrl;
+                                
+                                // Hide status and show result
+                                if (statusContainer) statusContainer.style.display = 'none';
+                                if (analysisResult) analysisResult.style.display = 'block';
+                                
+                                // Set up copy button
+                                const copyBtn = document.getElementById('copy-link-btn');
+                                const copyMsg = document.getElementById('copy-success-message');
+                                
+                                if (copyBtn && copyMsg && shareableLink) {
+                                    // Remove any existing event listeners to prevent duplicates
+                                    const copyHandler = () => {
+                                        shareableLink.select();
+                                        try {
+                                            // Use modern clipboard API with fallback
+                                            if (navigator.clipboard) {
+                                                navigator.clipboard.writeText(shareableLink.value);
+                                            } else {
+                                                document.execCommand('copy');
+                                            }
+                                            copyMsg.style.display = 'block';
+                                            setTimeout(() => {
+                                                copyMsg.style.display = 'none';
+                                            }, 3000);
+                                        } catch (clipboardError) {
+                                            console.error('Failed to copy:', clipboardError);
+                                        }
+                                    };
+                                    
+                                    // Remove old listeners by cloning without events but preserve the ID
+                                    const newCopyBtn = copyBtn.cloneNode(false);
+                                    copyBtn.parentNode.replaceChild(newCopyBtn, copyBtn);
+                                    
+                                    // Add the event listener
+                                    newCopyBtn.addEventListener('click', copyHandler);
+                                }
+                                
+                            } 
+                            // Check for run_id (async processing)
+                            else if (response.run_id) {
+                                // Store the run_id for later use
+                                localStorage.setItem('lastRunId', response.run_id);
+                                
+                                // Update the status message to show submission confirmation
+                                if (statusMessage) {
+                                    statusMessage.textContent = 'Your DMP analysis has been submitted successfully!';
+                                }
+                                
+                                // Hide spinner and show email notification
+                                if (statusContainer) {
+                                    const spinner = statusContainer.querySelector('.spinner');
+                                    if (spinner) spinner.style.display = 'none';
+                                    
+                                    const emailBox = statusContainer.querySelector('.email-notification-box');
+                                    if (emailBox) emailBox.style.display = 'flex';
+                                }
+                                
+                                // If we have an access token, store it
+                                if (response.access_token) {
+                                    localStorage.setItem('lastAccessToken', response.access_token);
+                                }
+                            }
+                            // Generic success case
+                            else {
+                                // Show email notification
+                                if (statusContainer) {
+                                    const spinner = statusContainer.querySelector('.spinner');
+                                    if (spinner) spinner.style.display = 'none';
+                                    
+                                    const emailBox = statusContainer.querySelector('.email-notification-box');
+                                    if (emailBox) emailBox.style.display = 'flex';
+                                }
+                                
+                                if (statusMessage) {
+                                    statusMessage.textContent = 'Your analysis has been submitted. You will receive an email when it is ready.';
+                                }
+                            }
+                        } else {
+                            // No response case
+                            throw new Error('No response received from the server');
                         }
                     } catch (error) {
-                        console.error('Form submission error:', error);
-                        if (errorContainer) {
-                            errorContainer.textContent = `Error: ${error.message || 'Failed to process request'}`;
-                            errorContainer.style.display = 'block';
-                        }
-                        if (resultContainer) {
-                            resultContainer.style.display = 'none';
-                        }
+                        console.error('Error during form submission:', error);
+                        showError(error.message || 'An unexpected error occurred. Please try again.');
+                        
+                        // Show form again if there was an error
+                        document.getElementById('analysis-form').style.display = 'block';
+                        if (statusContainer) statusContainer.style.display = 'none';
                     } finally {
                         // Re-enable submit button
                         if (submitButton) {
                             submitButton.disabled = false;
-                            submitButton.textContent = 'Submit';
+                            submitButton.textContent = 'Run Analysis';
+                        }
+                        
+                        // Hide spinner if submission failed
+                        if (statusContainer) {
+                            const spinnerElement = statusContainer.querySelector('.spinner');
+                            if (spinnerElement) spinnerElement.style.display = 'none';
                         }
                     }
                 });

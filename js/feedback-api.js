@@ -140,33 +140,28 @@ const FeedbackAPI = (function() {
                 feedback: feedbackItem
             };
             
-            // Send feedback to API with timeout handling
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-            
-            const response = await fetch(`${window.AppConfig.api.baseUrl}${window.AppConfig.api.endpoints.resultsFeedback}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(feedbackPayload),
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`API error: ${response.status} - ${errorText}`);
+            // Check if ApiClient is available
+            if (!window.ApiClient) {
+                console.error('API client not initialized');
+                throw new Error('API client not initialized');
             }
             
-            // Try to parse response as JSON
+            // Ensure API client is using authentication
+            window.ApiClient.useAuthentication(true);
+            
+            // Send feedback using authenticated ApiClient
+            console.log('Submitting domain feedback using authenticated ApiClient...');
             let responseData;
             try {
-                responseData = await response.json();
-                console.log('Feedback submission response:', responseData);
-            } catch (e) {
-                // Response wasn't JSON, that's okay
+                responseData = await window.ApiClient.post(
+                    window.AppConfig.api.endpoints.resultsFeedback,
+                    feedbackPayload
+                );
+                
+                console.log('Feedback submission successful:', responseData);
+            } catch (apiError) {
+                console.error('API error during feedback submission:', apiError);
+                throw apiError;
             }
             
             // Show success status
@@ -273,33 +268,28 @@ const FeedbackAPI = (function() {
                 feedback: feedbackData.overallFeedback
             };
             
-            // Send feedback to API with timeout handling
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-            
-            const response = await fetch(`${window.AppConfig.api.baseUrl}${window.AppConfig.api.endpoints.resultsFeedback}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(feedbackPayload),
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`API error: ${response.status} - ${errorText}`);
+            // Check if ApiClient is available
+            if (!window.ApiClient) {
+                console.error('API client not initialized');
+                throw new Error('API client not initialized');
             }
             
-            // Try to parse response as JSON
+            // Ensure API client is using authentication
+            window.ApiClient.useAuthentication(true);
+            
+            // Send feedback using authenticated ApiClient
+            console.log('Submitting overall feedback using authenticated ApiClient...');
             let responseData;
             try {
-                responseData = await response.json();
-                console.log('Overall feedback submission response:', responseData);
-            } catch (e) {
-                // Response wasn't JSON, that's okay
+                responseData = await window.ApiClient.post(
+                    window.AppConfig.api.endpoints.resultsFeedback,
+                    feedbackPayload
+                );
+                
+                console.log('Overall feedback submission successful:', responseData);
+            } catch (apiError) {
+                console.error('API error during overall feedback submission:', apiError);
+                throw apiError;
             }
             
             // Show success status

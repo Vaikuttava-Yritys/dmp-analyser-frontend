@@ -3,6 +3,8 @@
  * 
  * This module handles Azure AD authentication for the application to access APIs
  * without user interaction (client credentials flow) via a secure backend proxy.
+ * 
+ * In development mode, it can bypass token authentication for easier local testing.
  */
 
 // Token handling - using closure for better security
@@ -207,6 +209,12 @@ async function fetchToken() {
  * @returns {Promise<string>} - Promise resolving to the access token
  */
 async function getAccessToken() {
+  // In development mode, we can bypass token authentication for easier local testing
+  if (window.AppConfig && window.AppConfig.env === 'development' && window.AppConfig.auth.bypassAuthInDev) {
+    console.log('Development mode: Bypassing token authentication');
+    return 'dev-mode-token';
+  }
+
   // Check if we have a valid cached token
   const cachedToken = tokenManager.getToken();
   if (cachedToken) {

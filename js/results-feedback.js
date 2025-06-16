@@ -233,6 +233,26 @@ const ResultsFeedback = (function() {
         feedbackContainer.className = `${elementType}-feedback-container`;
         feedbackContainer.style.width = '100%';
         
+        // Create clarity feedback container - first question row
+        const clarityContainer = document.createElement('div');
+        clarityContainer.className = 'clarity-feedback';
+        clarityContainer.style.display = 'flex';
+        clarityContainer.style.flexDirection = 'row';
+        clarityContainer.style.alignItems = 'center';
+        clarityContainer.style.justifyContent = 'flex-start';
+        clarityContainer.style.flexWrap = 'nowrap';
+        clarityContainer.style.gap = '8px';
+        clarityContainer.style.margin = '5px 0';
+        clarityContainer.style.width = '100%';
+        
+        // Create label for clarity question
+        const clarityLabel = document.createElement('label');
+        clarityLabel.textContent = 'Criterion - is it clear and appropriate?';
+        clarityLabel.style.marginRight = '10px';
+        clarityLabel.style.whiteSpace = 'nowrap';
+        clarityLabel.style.fontWeight = '500';
+        clarityContainer.appendChild(clarityLabel);
+        
         // Create accuracy feedback container - ensure it's a flex container for inline layout
         const accuracyContainer = document.createElement('div');
         accuracyContainer.className = 'accuracy-feedback';
@@ -363,25 +383,7 @@ const ResultsFeedback = (function() {
         
         accuracyContainer.appendChild(toggleContainer);
         
-        // Create clarity feedback container - second question row
-        const clarityContainer = document.createElement('div');
-        clarityContainer.className = 'clarity-feedback';
-        clarityContainer.style.display = 'flex';
-        clarityContainer.style.flexDirection = 'row';
-        clarityContainer.style.alignItems = 'center';
-        clarityContainer.style.justifyContent = 'flex-start';
-        clarityContainer.style.flexWrap = 'nowrap';
-        clarityContainer.style.gap = '8px';
-        clarityContainer.style.margin = '5px 0';
-        clarityContainer.style.width = '100%';
-        
-        // Create label for clarity question
-        const clarityLabel = document.createElement('label');
-        clarityLabel.textContent = 'Criterion - is it clear and appropriate?';
-        clarityLabel.style.marginRight = '10px';
-        clarityLabel.style.whiteSpace = 'nowrap';
-        clarityLabel.style.fontWeight = '500';
-        clarityContainer.appendChild(clarityLabel);
+        // Clarity container and label already created above
         
         // Create icon-based toggle container for clarity
         const clarityToggleContainer = document.createElement('div');
@@ -499,60 +501,97 @@ const ResultsFeedback = (function() {
         // Create comment input container with everything on one row
         const commentContainer = document.createElement('div');
         commentContainer.className = 'comment-input-row';
+        commentContainer.style.display = 'flex';
+        commentContainer.style.flexWrap = 'wrap';
+        commentContainer.style.alignItems = 'center';
+        commentContainer.style.gap = '8px';
+        commentContainer.style.margin = '10px 0';
         
-        // No label needed as per requirements
-        // const commentLabel = document.createElement('label');
-        // commentLabel.textContent = 'Comment (optional):';
-        // commentLabel.className = 'comment-label';
-        // commentContainer.appendChild(commentLabel);
+        // Create a flex container for the input and buttons
+        const inputButtonContainer = document.createElement('div');
+        inputButtonContainer.style.display = 'flex';
+        inputButtonContainer.style.flexGrow = '1';
+        inputButtonContainer.style.gap = '8px';
+        inputButtonContainer.style.alignItems = 'center';
         
         const commentInput = document.createElement('input');
         commentInput.type = 'text';
         commentInput.className = 'comment-input';
         commentInput.maxLength = 140;
         commentInput.placeholder = 'Your optional comment here...';
+        commentInput.style.flexGrow = '1';
+        commentInput.style.padding = '6px 8px';
+        commentInput.style.borderRadius = '4px';
+        commentInput.style.border = '1px solid #ced4da';
         commentInput.addEventListener('input', (e) => {
             setCommentFeedback(elementId, e.target.value);
         });
-        commentContainer.appendChild(commentInput);
+        inputButtonContainer.appendChild(commentInput);
+        
+        // Create button container for submit and cancel
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.gap = '8px';
         
         // Create submit button inline with comment input
         const submitButton = document.createElement('button');
         submitButton.className = 'inline-submit-btn';
         submitButton.textContent = 'Submit';
+        submitButton.style.backgroundColor = '#007bff';
+        submitButton.style.color = 'white';
+        submitButton.style.border = 'none';
+        submitButton.style.borderRadius = '4px';
+        submitButton.style.padding = '6px 12px';
+        submitButton.style.cursor = 'pointer';
+        submitButton.style.fontSize = '14px';
+        submitButton.style.height = '32px';
+        submitButton.style.minWidth = '80px';
         submitButton.addEventListener('click', () => {
             // Save feedback for this specific element
             saveFeedback(elementId);
         });
-        commentContainer.appendChild(submitButton);
+        buttonContainer.appendChild(submitButton);
         
-        // Create cancel button inline with submit button - matching style with submit button
+        // Create cancel button inline with submit button - matching height but smaller width
         const cancelButton = document.createElement('button');
         cancelButton.className = 'inline-cancel-btn';
         cancelButton.textContent = 'Cancel';
-        cancelButton.style.marginLeft = '8px';
         cancelButton.style.backgroundColor = '#6c757d'; // Gray color
         cancelButton.style.color = 'white';
         cancelButton.style.border = 'none';
         cancelButton.style.borderRadius = '4px';
-        cancelButton.style.padding = '6px 12px'; // Match submit button padding
+        cancelButton.style.padding = '6px 8px'; // Slightly smaller padding
         cancelButton.style.cursor = 'pointer';
-        cancelButton.style.fontSize = submitButton.style.fontSize || '14px'; // Match submit button font size
+        cancelButton.style.fontSize = '14px';
+        cancelButton.style.height = '32px'; // Same height as submit
+        cancelButton.style.minWidth = '60px'; // Smaller width than submit
         cancelButton.addEventListener('click', () => {
             // Hide the feedback row
             feedbackRow.style.display = 'none';
             // Reset feedback toggle button color to blue
             feedbackToggle.style.backgroundColor = '#007bff';
         });
-        commentContainer.appendChild(cancelButton);
+        buttonContainer.appendChild(cancelButton);
         
-        // Add status indicator
+        inputButtonContainer.appendChild(buttonContainer);
+        commentContainer.appendChild(inputButtonContainer);
+        
+        // Add status indicator with improved styling
         const statusIndicator = document.createElement('span');
         statusIndicator.className = 'feedback-status';
         statusIndicator.id = `${elementType}-${elementId}-feedback-status`;
+        statusIndicator.style.marginLeft = '8px';
+        statusIndicator.style.fontSize = '14px';
+        statusIndicator.style.padding = '4px 8px';
+        statusIndicator.style.borderRadius = '4px';
+        statusIndicator.style.display = 'inline-block';
+        statusIndicator.style.maxWidth = '200px';
+        statusIndicator.style.overflow = 'hidden';
+        statusIndicator.style.textOverflow = 'ellipsis';
+        statusIndicator.style.whiteSpace = 'nowrap';
         commentContainer.appendChild(statusIndicator);
         
-        // Add to feedback container - change order to put clarity first
+        // Add to feedback container - put clarity (criterion) first, then accuracy (AI assessment)
         feedbackContainer.appendChild(clarityContainer);
         feedbackContainer.appendChild(accuracyContainer);
         feedbackContainer.appendChild(commentContainer);

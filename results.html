@@ -4,10 +4,141 @@
     <meta charset="UTF-8">
     <title>DMP Assessment Results</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/shared-styles.css">
-    <link rel="stylesheet" href="css/feedback-styles.css?v=1.1">
-    <link rel="stylesheet" href="css/tabs.css">
-    <link rel="stylesheet" href="css/results-feedback.css?v=1.0">
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    
+    <!-- Preconnect to key domains -->
+    <link rel="preconnect" href="https://dmp-apim.azure-api.net">
+    <link rel="dns-prefetch" href="https://dmp-apim.azure-api.net">
+    
+    <!-- Load environment variables from env.js (generated from .env file) -->
+    <script src="env.js"></script>
+    
+    <!-- Critical above-the-fold CSS -->
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f8f8fa;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        /* Container */
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 32px;
+        }
+        
+        /* Typography */
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 24px;
+            color: #0057b8;
+            text-align: center;
+        }
+        
+        .centered {
+            text-align: center;
+        }
+        
+        /* Spinner overlay */
+        #spinner-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Loader animation */
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #0057b8;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Error display */
+        .error {
+            padding: 20px;
+            background-color: #fff0f0;
+            border-left: 4px solid #ff3333;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+    </style>
+    
+    <!-- Preload script for deferred CSS loading -->
+    <script>
+        // Function to load CSS files in order of importance
+        function loadDeferredCSS() {
+            const cssFiles = [
+                'css/shared-styles.css',
+                'css/tabs.css',
+                'css/feedback-styles.css?v=1.1',
+                'css/results-feedback.css?v=1.0'
+            ];
+            
+            let loadedCount = 0;
+            
+            // Load each CSS file in sequence
+            function loadNextCSS(index) {
+                if (index >= cssFiles.length) return;
+                
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = cssFiles[index];
+                link.onload = function() {
+                    loadedCount++;
+                    // Load next CSS file after a small delay
+                    setTimeout(() => loadNextCSS(index + 1), 50);
+                };
+                link.onerror = function() {
+                    // Try next file even if this one fails
+                    setTimeout(() => loadNextCSS(index + 1), 50);
+                };
+                document.head.appendChild(link);
+            }
+            
+            // Start loading CSS files
+            loadNextCSS(0);
+        }
+        
+        // Start loading CSS after page starts rendering
+        if (window.requestIdleCallback) {
+            requestIdleCallback(loadDeferredCSS);
+        } else {
+            setTimeout(loadDeferredCSS, 1);
+        }
+    </script>
+    
+    <!-- Fallback for browsers with JavaScript disabled -->
+    <noscript>
+        <link rel="stylesheet" href="css/shared-styles.css">
+        <link rel="stylesheet" href="css/feedback-styles.css?v=1.1">
+        <link rel="stylesheet" href="css/tabs.css">
+        <link rel="stylesheet" href="css/results-feedback.css?v=1.0">
+    </noscript>
     
     <!-- Environment configuration - Single source of truth -->
     <script>
@@ -36,15 +167,162 @@
         <div id="navigation-placeholder"></div>
         <div class="grey-box" style="margin-bottom: 15px;">
             <div class="feedback-prompt">
-                <strong>Early version</strong> — Feedback submission functionality is being implemented. Thank you for your patience.
+                <strong>Early version</strong> — Please leave feedback on analysis results. Thank you for your patience.
             </div>
         </div>
-        <h1 class="centered">DMP Assessment Results</h1>
-        <div id="loading" class="loading">Loading analysis...</div>
+        
+        <!-- Summary skeleton - immediately visible -->
+        <div id="summary-skeleton">
+            <h1 class="centered">DMP Assessment Results</h1>
+            <div class="tab-section">
+                <div id="overall-assessment">Loading summary...</div>
+            </div>
+            <div class="tab-section">
+                <div id="analysis-info"></div>
+            </div>
+        </div>
+        
+        <!-- Error display -->
         <div id="error" class="error" style="display:none;">
             <p class="error-message"></p>
             <div id="debug-info" style="display:none;"></div>
         </div>
+        
+        <!-- Inline script for immediate summary rendering -->
+        <script>
+            // Immediately execute to render summary as fast as possible
+            (async function() {
+                try {
+                    // Get token from URL
+                    const token = new URLSearchParams(window.location.search).get('token');
+                    if (!token) {
+                        throw new Error('No access token provided');
+                    }
+                    
+                    // Wait for AppConfig to be available
+                    const waitForAppConfig = () => {
+                        return new Promise((resolve) => {
+                            if (window.AppConfig && window.AppConfig.api && window.AppConfig.api.baseUrl) {
+                                resolve();
+                            } else {
+                                setTimeout(() => resolve(waitForAppConfig()), 50);
+                            }
+                        });
+                    };
+                    
+                    // Wait for FeedbackRender to be available
+                    const waitForFeedbackRender = () => {
+                        return new Promise((resolve) => {
+                            if (window.FeedbackRender) {
+                                resolve();
+                            } else {
+                                setTimeout(() => resolve(waitForFeedbackRender()), 50);
+                            }
+                        });
+                    };
+                    
+                    // Wait for ApiClient to be available
+                    const waitForApiClient = () => {
+                        return new Promise((resolve) => {
+                            if (window.ApiClient) {
+                                resolve();
+                            } else {
+                                setTimeout(() => resolve(waitForApiClient()), 50);
+                            }
+                        });
+                    };
+                    
+                    // Wait for all dependencies
+                    await Promise.all([waitForAppConfig(), waitForFeedbackRender(), waitForApiClient()]);
+                    
+                    // Configure ApiClient for authentication
+                    window.ApiClient.useAuthentication(true);
+                    
+                    // Fetch minimal data needed for summary
+                    console.log('Fetching summary data...');
+                    let data;
+                    try {
+                        data = await window.ApiClient.get(`/api/dmp/enriched-checklists/access/${encodeURIComponent(token)}`);
+                        
+                        // Check if the response indicates results are not ready yet
+                        if (!data || data.status === 'processing' || data.status === 'pending') {
+                            throw new Error('Results are still being processed');
+                        }
+                    } catch (apiError) {
+                        // Show a user-friendly notification
+                        document.getElementById('error').style.display = 'block';
+                        const errorMessage = document.querySelector('.error-message');
+                        
+                        if (apiError.message.includes('processing')) {
+                            errorMessage.innerHTML = `
+                                <div style="display: flex; align-items: center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0057b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 10px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                    <strong>Your analysis is still being processed</strong>
+                                </div>
+                                <p>The DMP analysis can take several minutes to complete. Please check back later or wait for the email notification.</p>
+                            `;
+                        } else if (apiError.response && apiError.response.status === 404) {
+                            errorMessage.innerHTML = `
+                                <div style="display: flex; align-items: center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff3333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 10px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                    <strong>Results not found</strong>
+                                </div>
+                                <p>The requested analysis results could not be found. This may be because:</p>
+                                <ul>
+                                    <li>The analysis has not been completed yet</li>
+                                    <li>The access token is invalid or has expired</li>
+                                    <li>The analysis was deleted or never existed</li>
+                                </ul>
+                                <p>Please check your email for a notification when your results are ready.</p>
+                            `;
+                        } else {
+                            errorMessage.innerHTML = `
+                                <div style="display: flex; align-items: center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff3333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 10px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                    <strong>Error loading results</strong>
+                                </div>
+                                <p>There was a problem loading the analysis results: ${apiError.message}</p>
+                            `;
+                        }
+                        
+                        // Hide spinner
+                        document.getElementById('spinner-overlay').style.display = 'none';
+                        throw apiError; // Re-throw to stop further execution
+                    }
+                    
+                    // Render summary components immediately
+                    console.log('Rendering summary components...');
+                    window.FeedbackRender.renderOverallAssessment(data);
+                    window.FeedbackRender.renderAnalysisInfo(data);
+                    
+                    // Hide spinner now that summary is visible
+                    document.getElementById('spinner-overlay').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('spinner-overlay').style.display = 'none';
+                    }, 300);
+                    
+                    // Start loading remaining content in the background
+                    setTimeout(() => {
+                        // Copy summary content to the tab structure for when tabs are shown
+                        const overallAssessment = document.getElementById('overall-assessment').innerHTML;
+                        const analysisInfo = document.getElementById('analysis-info').innerHTML;
+                        
+                        document.getElementById('summary-tab-overall-assessment').innerHTML = overallAssessment;
+                        document.getElementById('summary-tab-analysis-info').innerHTML = analysisInfo;
+                        
+                        // Load remaining content
+                        loadRemainingContent(data, data.run_id, token, data.checklist || {});
+                    }, 100);
+                } catch (error) {
+                    console.error('Error in summary mini-app:', error);
+                    document.getElementById('error').style.display = 'block';
+                    document.querySelector('.error-message').textContent = `Error loading summary: ${error.message}`;
+                    document.getElementById('spinner-overlay').style.display = 'none';
+                }
+            })();
+        </script>
+        
+        <!-- Full results interface (hidden until loaded) -->
         <div id="results" style="display:none;">
             <!-- Tabs Navigation -->
             <div class="tabs-container">
@@ -61,11 +339,11 @@
                 <!-- Summary Tab -->
                 <div id="summary-tab" class="tab-content active">
                     <div class="tab-section">
-                        <div id="overall-assessment"></div>
+                        <div id="summary-tab-overall-assessment"></div>
                     </div>
                     
                     <div class="tab-section">
-                        <div id="analysis-info"></div>
+                        <div id="summary-tab-analysis-info"></div>
                     </div>
                 </div>
                 
@@ -114,6 +392,8 @@
         </div>
     </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+<!-- Load environment variables from env.js (generated from .env file) -->
+<script src="env.js"></script>
 <!-- Load scripts using centralized loader -->
 <script src="js/loader.js"></script>
 <script>
@@ -557,37 +837,110 @@ function initResultsPage() {
 
 // Fetch and render data
 async function fetchAndRenderData(token) {
+    console.log('fetchAndRenderData called - delegating to mini-app approach');
     try {
+        // This function is now just a compatibility wrapper
+        // The actual rendering is handled by the inline mini-app script
+        // and the loadRemainingContent function
+        
         // Make sure ApiClient is properly initialized with authentication
         if (!window.ApiClient) {
             throw new Error('API client not initialized');
         }
         
-        console.log('API client available, configuring for authentication...');
         // Ensure API client is using authentication
         window.ApiClient.useAuthentication(true);
         
         // Fetch enriched checklist data using the API client
-        console.log(`Fetching data from ${window.AppConfig.api.baseUrl}/api/dmp/enriched-checklists/access/${encodeURIComponent(token)}`);
+        console.log('Fetching enriched checklist data...');
         const data = await window.ApiClient.get(`/api/dmp/enriched-checklists/access/${encodeURIComponent(token)}`);
-        console.log('Fetched data:', data);
         
-        // For debugging
-        const debugInfo = document.getElementById('debug-info');
-        debugInfo.textContent = JSON.stringify(data, null, 2).substring(0, 1000) + '...';
-        // Normalize the data structure
+        // Normalize the data structure for consistent access
         const normalizedData = FeedbackData.normalizeData(data);
         
-        // Get the run_id from the data - it's nested in enriched_data
-        // Extract run_id with fallbacks
-        const runId = (data.enriched_data && data.enriched_data.run_id) || 
-                      (normalizedData.enriched_data && normalizedData.enriched_data.run_id) ||
+        // Get the run_id from the data or use the token as fallback
+        const runId = normalizedData.analysis_id || 
                       normalizedData.run_id || 
                       data.run_id || 
                       token;
         
         // Store the run_id globally for access by all modules
         window.runId = runId;
+        
+        // Initialize checklist variable to avoid undefined error
+        let checklist = normalizedData.checklist || {};
+        
+        // Render summary components
+        FeedbackRender.renderOverallAssessment(normalizedData);
+        FeedbackRender.renderAnalysisInfo(normalizedData);
+        
+        // Hide spinner
+        if (document.getElementById('spinner-overlay')) {
+            document.getElementById('spinner-overlay').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('spinner-overlay').style.display = 'none';
+            }, 300);
+        }
+        
+        // Load remaining content
+        setTimeout(() => {
+            loadRemainingContent(normalizedData, runId, token, checklist);
+        }, 100);
+        
+    } catch (err) {
+        console.error('Error loading analysis:', err);
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').querySelector('.error-message').textContent = `Failed to load analysis: ${err.message}`;
+        document.getElementById('debug-info').style.display = 'block';
+    }
+}
+
+// Function to load deferred CSS files during browser idle time
+async function loadDeferredCSS() {
+    const cssFiles = [
+        'css/shared-styles.css',
+        'css/feedback-styles.css',
+        'css/tabs.css',
+        'css/results-feedback.css'
+    ];
+    
+    const loadCSS = (href) => {
+        return new Promise((resolve) => {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = href + '?v=' + (window.DMP_LOADER?.APP_VERSION || '1.0');
+            link.onload = () => resolve();
+            link.onerror = () => {
+                console.error(`Failed to load CSS: ${href}`);
+                resolve(); // Resolve anyway to not block other resources
+            };
+            document.head.appendChild(link);
+        });
+    };
+    
+    // Use requestIdleCallback if available, otherwise use setTimeout
+    const requestIdleCallbackCompat = window.requestIdleCallback || 
+        ((cb) => setTimeout(() => cb({ timeRemaining: () => 50 }), 1));
+    
+    // Load CSS files sequentially during idle time
+    for (const cssFile of cssFiles) {
+        await new Promise(resolve => {
+            requestIdleCallbackCompat(() => {
+                loadCSS(cssFile).then(resolve);
+            });
+        });
+    }
+    
+    console.log('All deferred CSS files loaded');
+}
+
+// Function to load remaining content after summary is displayed
+async function loadRemainingContent(normalizedData, runId, token, checklist = {}) {
+    console.log('Loading remaining content...');
+    try {
+        // Load all deferred CSS files
+        console.log('Loading deferred CSS files...');
+        await loadDeferredCSS();
         
         // Initialize feedback system with the run_id
         if (typeof ResultsFeedback !== 'undefined' && typeof FeedbackAPI !== 'undefined') {
@@ -598,35 +951,32 @@ async function fetchAndRenderData(token) {
         }
         
         // Fetch base checklist data if needed for additional context
-        let checklist = normalizedData.checklist || {};
         if (!checklist.sections && normalizedData.checklist_id) {
             try {
-                const checklistResponse = await fetch(`${API_BASE_URL}/api/dmp/checklists/${normalizedData.checklist_id}`);
-                if (checklistResponse.ok) {
-                    checklist = await checklistResponse.json();
+                console.log(`Fetching checklist using ApiClient: /api/dmp/checklists/${normalizedData.checklist_id}`);
+                // Use ApiClient with authentication instead of fetch
+                const checklist_data = await window.ApiClient.get(`/api/dmp/checklists/${normalizedData.checklist_id}`);
+                if (checklist_data) {
+                    checklist = checklist_data;
                     // Add the checklist to the normalized data
                     normalizedData.checklist = checklist;
+                    console.log('Successfully fetched checklist data');
                 }
             } catch (checklistErr) {
                 console.warn('Failed to fetch base checklist:', checklistErr);
             }
         }
         
-        // Hide loading, show results
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('results').style.display = 'block';
-        
-        // Render all sections using our modular render functions
-        try {
-            // Use FeedbackRender functions for all sections
-            console.log('Rendering overall assessment...');
-            FeedbackRender.renderOverallAssessment(normalizedData);
-            
-            console.log('Rendering analysis info (with manuscript metadata)...');
-            FeedbackRender.renderAnalysisInfo(normalizedData);
-        } catch (renderError) {
-            console.error('Error during section rendering:', renderError);
-        }
+        // Hide the summary skeleton and show the full tabbed interface
+        console.log('Transitioning from summary skeleton to full interface...');
+        requestAnimationFrame(() => {
+            // Show the full results container with tabs
+            document.getElementById('results').style.display = 'block';
+            // Hide the summary skeleton after a short delay to avoid flicker
+            setTimeout(() => {
+                document.getElementById('summary-skeleton').style.display = 'none';
+            }, 100);
+        });
         
         // Get feedback note from the data with detailed logging
         console.log('Looking for feedback note in data:', normalizedData);

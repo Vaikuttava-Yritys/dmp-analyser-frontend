@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DMP Analyzer - Feedback</title>
     <link rel="stylesheet" href="css/shared-styles.css">
-    <link rel="stylesheet" href="style.css">
+    
+    <!-- Load environment variables from env.js (generated from .env file) -->
+    <script src="env.js"></script>
     <style>
         .feedback-form {
             background-color: #f9f9f9;
@@ -67,7 +69,7 @@
     <div class="container">
         <!-- Include the navigation component -->
         <div id="navigation-placeholder"></div>
-        <h1 class="centered">DMP Analyzer</h1>
+        <h1 class="centered">Feedback</h1>
         
         <div class="success-message" id="success-message">
             Thank you for your feedback! We appreciate your input.
@@ -78,7 +80,7 @@
         </div>
         
         <div class="feedback-form">
-            <h2>Interested? Get updates and share your thoughts.</h2>
+            <h2>Please leave your feedback or email to get updates on the tool.</h2>
             <form id="feedbackForm">
                 <div class="form-group">
                     <label for="email">Email (optional):</label>
@@ -104,12 +106,37 @@
 
     <script src="js/config.js"></script>
     <script>
-        // Get API configuration
-        const API_BASE = window.AppConfig.api.baseUrl;
-        const FEEDBACK_ENDPOINT = window.AppConfig.api.endpoints.feedback;
-        
         // Store feedback in local storage as fallback
         const STORAGE_KEY = 'reproai_feedback';
+        
+        // Variables for API configuration
+        let API_BASE;
+        let FEEDBACK_ENDPOINT;
+        
+        // Wait for AppConfig to be available
+        const waitForAppConfig = () => {
+            return new Promise((resolve) => {
+                if (window.AppConfig && window.AppConfig.api && window.AppConfig.api.baseUrl) {
+                    resolve();
+                } else {
+                    setTimeout(() => waitForAppConfig().then(resolve), 50);
+                }
+            });
+        };
+        
+        // Initialize API configuration
+        const initializeApiConfig = async () => {
+            await waitForAppConfig();
+            API_BASE = window.AppConfig.api.baseUrl;
+            FEEDBACK_ENDPOINT = window.AppConfig.api.endpoints.feedback;
+            console.log('API configuration initialized:', { API_BASE, FEEDBACK_ENDPOINT });
+            
+            // Load feedback after configuration is ready
+            loadFeedback();
+        };
+        
+        // Start initialization when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializeApiConfig);
         
         // Load existing feedback from local storage (for demonstration purposes)
         function loadFeedback() {
@@ -263,8 +290,7 @@
             loadFeedback();
         });
         
-        // Load feedback when the page loads
-        document.addEventListener('DOMContentLoaded', loadFeedback);
+        // Feedback is now loaded after API configuration is initialized
     </script>
     <script>
         // Load the navigation component
