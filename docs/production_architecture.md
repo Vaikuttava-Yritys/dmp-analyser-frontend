@@ -4,6 +4,7 @@
 
 The DMP Analyser system consists of four main components deployed in Azure.
 Architecture now supports secure token issuance and role-based access to API via Azure AD and APIM.
+All backend services are locked down: only APIM can access the Token Proxy and API backend.
 
 1. **Frontend** – Azure Static Web Apps  
 2. **API Backend** – Azure Container Apps  
@@ -18,29 +19,33 @@ Architecture now supports secure token issuance and role-based access to API via
 │   Frontend (SPA)   │───────────────▶│   API Backend      │───────────────▶│   MongoDB Atlas │
 │   Azure Static Web │                │   Azure Container  │                │   or CosmosDB   │
 └─────────┬──────────┘                └─────────┬──────────┘                └─────────────────┘
-          │                                     │                                     ▲
-          │                                     │                                     │
-          │                                     ▼                                     │
-          │                           ┌────────────────────┐                          │
-          │                           │                    │                          │
-          │                           │   LLM Services     │                          │
-          │                           │   OpenAI/Anthropic │                          │
-          │                           └────────────────────┘                          │
-          │                                                                           │
-          ▼                                                                           │
+           │                                     │                                     ▲
+           │                                     │                                     │
+           │                                     ▼                                     │
+           │                           ┌────────────────────┐                          │
+           │                           │                    │                          │
+           │                           │   LLM Services     │                          │
+           │                           │   OpenAI/Anthropic │                          │
+           │                           └────────────────────┘                          │
+           │                                                                           │
+           ▼                                                                           │
 ┌────────────────────┐                                                                │
 │                    │                                                                │
 │   Token Proxy      │◀──────────────────────────────────────────────────────────────┘
 │   Azure Web App    │
 └─────────┬──────────┘
-          ▲
-          │
-          ▼
+           ▲
+           │ 🔒 IP-restricted to APIM
+           ▼
 ┌────────────────────┐
 │                    │
 │   Azure API Mgmt   │
 │  (Public Entrypoint)│
 └────────────────────┘
+           ▲
+           │ 🔐 Requires subscription key
+           │
+           ▼
 ```
 
 ## Components
@@ -72,7 +77,8 @@ Architecture now supports secure token issuance and role-based access to API via
   - Azure Container Apps environment
   - Container listening on port 8002
   - 1.0 CPU cores minimum, 2.0 GB memory minimum
-  - Ingress enabled with external traffic
+  - Ingress restricted to APIM IP (132.220.54.209) using access restrictions
+- Public access is blocked; only APIM can communicate with the backend
   - Environment variables (see Environment Configuration section)
 - **Key Services**:
   - Analysis orchestration
@@ -108,6 +114,9 @@ Architecture now supports secure token issuance and role-based access to API via
 - **Technology**: Node.js with Express + MSAL
 - **Hosted on**: Azure App Service (Linux Web App)
 - **Secured via**: Azure API Management (APIM)
+- **Public access blocked** using IP access restrictions
+- Only Azure API Management can call the token endpoint
+- Token Proxy validates requests using the APIM subscription key
 
 ### Token Flow
 
@@ -127,14 +136,17 @@ Architecture now supports secure token issuance and role-based access to API via
 
 2. **Frontend ↔ Token Proxy**
 
-- URL: `xxx`
-- **CORS**: Configured via `ALLOWED_ORIGINS` in Web App settings
-- **No subscription key** needed for this endpoint 
+- URL: `https://dmp-apim.azure-api.net/token-proxy/token`
+- **CORS**: Still managed via ALLOWED_ORIGINS (unchanged)
+- Subscription key required to access this endpoint
+- Direct access to the Web App is blocked
 
 3. **Frontend ↔ API Backend**
 
 - Secured with token acquired from proxy
 - RESTful endpoints for submitting and fetching DMP analysis
+- API backend is only reachable via APIM
+- Public ingress to the container app is IP-restricted to APIM
 
 4. **API to Database**:
    - Asynchronous MongoDB connections
@@ -151,7 +163,11 @@ Architecture now supports secure token issuance and role-based access to API via
 - Only the Token Proxy can request Azure AD tokens with `client_credentials`
 - Secrets are never exposed to the frontend
 - CORS is strictly configured
-- Future options: rate limiting and IP filtering via APIM
+- Token Proxy is IP-restricted; only APIM can access it
+- API backend enforces IP restriction; only APIM can reach it
+- APIM endpoints require a valid subscription key
+- No direct public access exists to any backend component
+- Token Proxy and API backend validate request origin implicitly through APIM
 
 ## Monitoring and Logging
 
@@ -198,7 +214,7 @@ Architecture now supports secure token issuance and role-based access to API via
    - Deploy container using the image: `ghcr.io/juusorepo/reproai-v2:v2-20250608`
    - Configure environment variables as listed above
    - Set target port to 8002
-   - Enable external ingress
+   - Enable external ingress with IP restriction to APIM's IP (132.220.54.209)
 
 3. **Frontend Deployment**:
    - Create Azure Static Web Apps service
@@ -209,7 +225,8 @@ Architecture now supports secure token issuance and role-based access to API via
 5. **Token Proxy Deployment**:
 
 - **Token Proxy** deployed from GitHub using CI/CD via Azure Web Apps
-- **Frontend** uses APIM endpoint (`xxx`) to obtain token
+- **Frontend** uses APIM endpoint (`https://dmp-apim.azure-api.net/token-proxy/token`) to obtain token
+- After deployment, configure Access Restrictions in the Azure Web App to only allow requests from APIM's IP
 
 4. **Testing**:
    - Verify frontend can connect to API

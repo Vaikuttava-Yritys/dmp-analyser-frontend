@@ -982,8 +982,13 @@ async function loadRemainingContent(normalizedData, runId, token, checklist = {}
         console.log('Looking for feedback note in data:', normalizedData);
         
         // Try multiple possible locations for the feedback note
-        let feedbackNote = FeedbackData.safeGet(normalizedData, 'summary.feedback_note');
-        console.log('Feedback note from summary.feedback_note:', feedbackNote);
+        let feedbackNote = FeedbackData.safeGet(normalizedData, 'enriched_data.summary.feedback_note');
+        console.log('Feedback note from enriched_data.summary.feedback_note:', feedbackNote);
+        
+        if (!feedbackNote) {
+            feedbackNote = FeedbackData.safeGet(normalizedData, 'summary.feedback_note');
+            console.log('Feedback note from summary.feedback_note:', feedbackNote);
+        }
         
         if (!feedbackNote) {
             feedbackNote = FeedbackData.safeGet(normalizedData, 'feedback_note');
@@ -1000,10 +1005,10 @@ async function loadRemainingContent(normalizedData, runId, token, checklist = {}
             console.log('Feedback note from summary.author_feedback:', feedbackNote);
         }
         
-        // For testing purposes, if no feedback note is found, create a sample one
+        // If no feedback note is found, show a message that feedback was not found
         if (!feedbackNote) {
-            console.log('No feedback note found in data, creating a sample one for testing');
-            feedbackNote = 'This is a sample feedback note for the author. It should appear in the Feedback for Author tab.';
+            console.log('No feedback note found in data');
+            feedbackNote = 'Feedback for authors was not found.';
         }
         
         // Use the local renderFeedbackNote function instead of FeedbackRender module
