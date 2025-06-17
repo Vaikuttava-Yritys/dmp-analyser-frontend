@@ -1,3 +1,4 @@
 # Gitignore
 
 ignore/
+.env.js

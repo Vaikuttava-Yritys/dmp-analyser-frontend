@@ -32,6 +32,15 @@ jobs:
                const coredemo = require('@actions/core')
                return await coredemo.getIDToken()
            result-encoding: string
+      - name: Generate env.js with secrets
+        run: |
+          echo "window.ENV = {" > env.js
+          echo "  NODE_ENV: 'production'," >> env.js
+          echo "  API_BASE_URL: 'https://dmp-apim.azure-api.net'," >> env.js
+          echo "  AUTH_PROXY_URL: 'https://dmp-token-proxy.azurewebsites.net'," >> env.js
+          echo "  AUTH_PROXY_TOKEN_ENDPOINT: '/token'," >> env.js
+          echo "  APIM_SUBSCRIPTION_KEY: '${{ secrets.APIM_SUBSCRIPTION_KEY }}'" >> env.js
+          echo "};" >> env.js
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
