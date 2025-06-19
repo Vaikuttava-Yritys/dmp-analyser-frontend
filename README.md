@@ -1,6 +1,6 @@
 # DMP Analyser
 
-DMP Analyser is a specialized web application designed to analyze Data Management Plans (DMPs) using Large Language Models (LLMs). Thecurrent early version evaluates text against a checklist of best practices and provides detailed feedback on how to improve the DMP.
+DMP Analyser is a specialized web application designed to analyze Data Management Plans (DMPs) using Large Language Models (LLMs). The current early version evaluates text against a checklist of best practices and provides detailed feedback on how to improve the DMP.
 
 ## Features
 
