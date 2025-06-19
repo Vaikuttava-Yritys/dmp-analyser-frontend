@@ -1,4 +1,4 @@
-# DMP Analyser
+# ReproAI Analyser
 
 DMP Analyser is a specialized web application designed to analyze Data Management Plans (DMPs) using Large Language Models (LLMs). The current early version evaluates text against a checklist of best practices and provides detailed feedback on how to improve the DMP.
 
@@ -32,8 +32,9 @@ dmp/
 
 ## How It Works
 
-The DMP Analyser uses a modular pipeline architecture that processes text through several specialized components:
+The ReproAI Analyser uses a modular pipeline architecture that processes text through several specialized components:
 
+0. **Text Extractor**: Extracts text from the document (PDF), using Dockling API at: https://docling-extractor.lemondune-e106e75a.westeurope.azurecontainerapps.io/
 1. **Metadata Extractor**: Identifies metadata from text (title, discipline, study type)
 2. **Domain Evaluator**: Analyzes text against specific domains of DMP best practices
 3. **Item Evaluator**: Evaluates individual checklist items
@@ -43,7 +44,7 @@ The DMP Analyser uses a modular pipeline architecture that processes text throug
 
 ## Deployment
 
-The DMP Analyser frontend can be deployed to any static hosting provider. The application connects to a backend API for processing.
+The ReproAI Analyser frontend can be deployed to any static hosting provider. The application connects to a backend API for processing.
 
 ### Configuration
 
@@ -63,8 +64,8 @@ The DMP Analyser frontend can be deployed to any static hosting provider. The ap
 ## Team
 
 - **Juuso Repo**, juuso.repo@utu.fi, INVEST Research Flagship Centre, University of Turku
-- **Johanna Laiho-Kauranne**, CSC IT Centre for Science
-- **Jukka Rantasaari**, University of Turku
+- **Lucy Bowes**, University of Oxford
+<TODO: add names here>
 
 ## License
 

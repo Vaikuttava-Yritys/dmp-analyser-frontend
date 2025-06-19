@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DMP Analyser</title>
+    <title>ReproAI</title>
     <link rel="icon" type="image/png" href="img/favicon.png">
     
     <!-- Performance hints for faster loading -->
     <link rel="preload" href="js/loader.js" as="script">
     <link rel="preload" href="js/config.js" as="script">
-    <link rel="preload" href="js/auth.js" as="script">
     <!-- Load environment variables from env.js (generated from .env file) -->
     <script src="env.js"></script>
     <!-- Note: window.ENV is now loaded from env.js which is generated from .env file -->
@@ -34,10 +33,9 @@
         
         // Single initialization point after DOM is ready
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize the application with all required scripts
+            // Initialize the application with required scripts
             window.DMP_LOADER.initApp({
-                loadAppJs: true,
-                loadInitJs: true,
+                loadInitJs: true,  // Only load init.js if needed
                 callback: window.initializePageContent
             }).catch(error => {
                 console.error('Failed to initialize application:', error);
@@ -256,7 +254,7 @@
                     <div class="tab-content">
                         <div id="file-upload-tab" class="tab-pane active">
                             <div class="form-group file-upload">
-                                <label for="pdf-file">Upload your DMP document (PDF format):</label>
+                                <label for="pdf-file">Upload your document (PDF):</label>
                                 <input type="file" id="pdf-file" accept=".pdf" />
                                 <small class="form-text">Maximum file size: 10MB</small>
                             </div>
@@ -286,8 +284,8 @@
                     <div class="form-group half">
                         <label for="checklist-select">Assessment Criteria:</label>
                         <select id="checklist-select">
-                            <option value="finnish_dmp_evaluation" selected>Finnish DMP Evaluation (Full)</option>
-                            <option value="finnish_dmp_evaluation_1domain">Finnish DMP Evaluation (1 Domain)</option>
+                            <option value="nature_1domain" selected>NHB Reporting Checklist (1 Domain)</option>
+                            <option value="nature_2domains">NHB Reporting Checklist (2 Domains)</option>
                         </select>
                     </div>
                     <div class="form-group half">
@@ -304,7 +302,7 @@
                     <textarea 
                       id="analysis-context" 
                       rows="4" 
-                      placeholder="Add any additional context about the DMP that might help with the analysis"
+                      placeholder="Add any additional context about the document that might help with the analysis"
                     ></textarea>
                 </div>
 
@@ -314,15 +312,15 @@
                 <button type="submit" id="submit-btn">Run Analysis</button>
                 
                 <div class="info-box">
-                    <p><strong>Note:</strong> This version uses the Finnish DMP evaluation criteria. We have processed it for AI analysis. <a href="#" id="download-checklist-btn">See PDF</a>. <br> The tool supports multiple assessment frameworks. Please contact us to add your own!</p>
-                    <p><strong>Reference:</strong> DMPTuuli working group. (2021). <a href="https://doi.org/10.5281/zenodo.4762326" target="_blank">Finnish DMP evaluation guidance</a>. Zenodo.</p>
+                    <p><strong>Note:</strong> This version uses the Nature Human Behaviour Reporting Checklist. We have processed it for AI analysis. <a href="#" id="download-checklist-btn">See PDF</a>. <br> The tool supports multiple assessment frameworks. Please contact us to add your own!</p>
+                    <p><strong>TODO:Reference:</strong>   <a href="https://todo.org" target="_blank">Nature Human Behaviour Reporting Checklist</a>. </p>
                 </div>
             </form>
         </div>
         <div id="analysis-status" style="display: none;">
             <h2>Analysis Submitted</h2>
             <div class="spinner" style="margin: 20px auto; display: none;"></div>
-            <p id="status-message">Your DMP analysis has been submitted successfully!</p>
+            <p id="status-message">Your manuscript analysis has been submitted successfully!</p>
             <div class="email-notification-box" style="display: none; align-items: center; background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 10px; color: #0057b8;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                 <p style="margin: 0;">You will receive an email when your analysis is ready.</p>
@@ -537,15 +535,15 @@
                         
                         // Determine which endpoint to use based on input type
                         const isPdfUpload = fileInput.files && fileInput.files.length > 0;
-                        let endpoint = isPdfUpload ? '/api/dmp/enriched-checklists/upload-pdf' : window.AppConfig.api.endpoints.analyze;
+                        let endpoint = isPdfUpload ? window.AppConfig.api.endpoints.uploadPdf : window.AppConfig.api.endpoints.analyze;
                         
                         let response;
                         
                         // Handle submission based on input type
                         if (isPdfUpload) {
                             try {
-                                // Set endpoint for PDF upload
-                                endpoint = '/api/dmp/enriched-checklists/upload-pdf';
+                                // Use the endpoint from config
+                                endpoint = window.AppConfig.api.endpoints.uploadPdf;
                                 
                                 // Create FormData for PDF upload
                                 const pdfFormData = new FormData();
@@ -612,21 +610,12 @@
                                     }
                                 }, null, 2));
                                 
-                                // Get auth token - with error handling
-                                const token = await window.AuthModule.getAccessToken();
-                                if (!token) {
-                                    throw new Error('Failed to get authentication token. Please try again or contact support.');
-                                }
-                                
                                 // Log the final URL right before making the request
                                 console.log('Final Upload URL (right before fetch):', uploadUrl.toString());
                                 
-                                // Make the fetch request with authentication
+                                // Make the fetch request without authentication
                                 const fetchResponse = await fetch(uploadUrl.toString(), {
                                     method: 'POST',
-                                    headers: {
-                                        'Authorization': `Bearer ${token}`
-                                    },
                                     body: pdfFormData,
                                     credentials: 'include'  // Important for CORS with credentials
                                 });
@@ -648,7 +637,7 @@
                         } else {
                             try {
                                 // Set endpoint for text analysis
-                                endpoint = '/api/dmp/enriched-checklists/analyze';
+                                endpoint = '/api/reproai/enriched-checklists/analyze';
                                 
                                 // Create request body according to API specification
                                 const requestBody = {
@@ -675,24 +664,16 @@
                                     url: `${window.AppConfig.api.baseUrl}${endpoint}`,
                                     method: 'POST',
                                     headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': 'Bearer [TOKEN]' // Don't log actual token
+                                        'Content-Type': 'application/json'
                                     },
                                     body: requestBody
                                 }, null, 2));
                                 
-                                // Get auth token - with error handling
-                                const token = await window.AuthModule.getAccessToken();
-                                if (!token) {
-                                    throw new Error('Failed to get authentication token. Please try again or contact support.');
-                                }
-                                
-                                // Make the fetch request with authentication
+                                // Make the fetch request without authentication
                                 const fetchResponse = await fetch(`${window.AppConfig.api.baseUrl}${endpoint}`, {
                                     method: 'POST',
                                     headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': `Bearer ${token}`
+                                        'Content-Type': 'application/json'
                                     },
                                     body: JSON.stringify(requestBody),
                                     credentials: 'include'  // Important for CORS with credentials
@@ -722,7 +703,7 @@
                             // Check for access_token (new API format)
                             if (response.access_token) {
                                 // Show the result link with the access_token
-                                const resultUrl = `https://green-plant-0d15bda03.6.azurestaticapps.net/results.html?token=${response.access_token}`;
+                                const resultUrl = `${window.location.origin}/results.html?token=${response.access_token}`;
                                 const resultLink = document.getElementById('results-direct-link');
                                 const shareableLink = document.getElementById('shareable-link');
                                 const analysisResult = document.getElementById('analysis-result');
@@ -771,7 +752,7 @@
                             // Check for token (legacy format)
                             else if (response.token) {
                                 // Show the result link
-                                const resultUrl = `https://green-plant-0d15bda03.6.azurestaticapps.net/results.html?token=${response.token}`;
+                                const resultUrl = `${window.location.origin}/results.html?token=${response.token}`;
                                 const resultLink = document.getElementById('results-direct-link');
                                 const shareableLink = document.getElementById('shareable-link');
                                 const analysisResult = document.getElementById('analysis-result');
@@ -823,7 +804,7 @@
                                 
                                 // Update the status message to show submission confirmation
                                 if (statusMessage) {
-                                    statusMessage.textContent = 'Your DMP analysis has been submitted successfully!';
+                                    statusMessage.textContent = 'Your manuscript analysis has been submitted successfully!';
                                 }
                                 
                                 // Hide spinner and show email notification

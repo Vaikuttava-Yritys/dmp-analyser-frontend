@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>DMP Assessment Results</title>
+    <title>ReproAI Assessment Results</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="img/favicon.png">
     
     <!-- Preconnect to key domains -->
-    <link rel="preconnect" href="https://dmp-apim.azure-api.net">
-    <link rel="dns-prefetch" href="https://dmp-apim.azure-api.net">
+    <link rel="preconnect" href="API_BASE_URL">
+    <link rel="dns-prefetch" href="API_BASE_URL">
     
     <!-- Load environment variables from env.js (generated from .env file) -->
     <script src="env.js"></script>
@@ -242,7 +242,7 @@
                     console.log('Fetching summary data...');
                     let data;
                     try {
-                        data = await window.ApiClient.get(`/api/dmp/enriched-checklists/access/${encodeURIComponent(token)}`);
+                        data = await window.ApiClient.get(`/api/reproai/enriched-checklists/access/${encodeURIComponent(token)}`);
                         
                         // Check if the response indicates results are not ready yet
                         if (!data || data.status === 'processing' || data.status === 'pending') {
@@ -259,7 +259,7 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0057b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 10px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                     <strong>Your analysis is still being processed</strong>
                                 </div>
-                                <p>The DMP analysis can take several minutes to complete. Please check back later or wait for the email notification.</p>
+                                <p>The manuscript analysis can take several minutes to complete. Please check back later or wait for the email notification.</p>
                             `;
                         } else if (apiError.response && apiError.response.status === 404) {
                             errorMessage.innerHTML = `
@@ -782,7 +782,7 @@ function setupPdfExport(token) {
             window.ApiClient.useAuthentication(true);
             
             // Get the PDF URL
-            const pdfEndpoint = `/api/dmp/enriched-checklists/access/${encodeURIComponent(token)}/export-pdf`;
+            const pdfEndpoint = `/api/reproai/enriched-checklists/access/${encodeURIComponent(token)}/export-pdf`;
             
             // Use the API client to get the PDF URL with authentication
             const pdfUrl = await window.ApiClient.getAuthenticatedUrl(pdfEndpoint);
@@ -853,7 +853,7 @@ async function fetchAndRenderData(token) {
         
         // Fetch enriched checklist data using the API client
         console.log('Fetching enriched checklist data...');
-        const data = await window.ApiClient.get(`/api/dmp/enriched-checklists/access/${encodeURIComponent(token)}`);
+        const data = await window.ApiClient.get(`/api/reproai/enriched-checklists/access/${encodeURIComponent(token)}`);
         
         // Normalize the data structure for consistent access
         const normalizedData = FeedbackData.normalizeData(data);
@@ -953,9 +953,9 @@ async function loadRemainingContent(normalizedData, runId, token, checklist = {}
         // Fetch base checklist data if needed for additional context
         if (!checklist.sections && normalizedData.checklist_id) {
             try {
-                console.log(`Fetching checklist using ApiClient: /api/dmp/checklists/${normalizedData.checklist_id}`);
+                console.log(`Fetching checklist using ApiClient: /api/reproai/checklists/${normalizedData.checklist_id}`);
                 // Use ApiClient with authentication instead of fetch
-                const checklist_data = await window.ApiClient.get(`/api/dmp/checklists/${normalizedData.checklist_id}`);
+                const checklist_data = await window.ApiClient.get(`/api/reproai/checklists/${normalizedData.checklist_id}`);
                 if (checklist_data) {
                     checklist = checklist_data;
                     // Add the checklist to the normalized data

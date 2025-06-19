@@ -1,7 +1,7 @@
 {
-    "name": "dmp-analyser-frontend",
+    "name": "reproai-frontend",
     "version": "1.0.0",
-    "description": "DMP Analyser Frontend Application",
+    "description": "ReproAI Frontend Application",
     "scripts": {
       "build": "echo 'No build step required for static site'",
       "start": "npx http-server -p 3000 -c-1"

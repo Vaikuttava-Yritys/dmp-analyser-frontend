@@ -7,7 +7,8 @@
 class ApiClient {
   constructor(baseUrl) {
     this.baseUrl = baseUrl || window.AppConfig?.api?.baseUrl || '';
-    this.useAuth = false; // Default to not using auth
+    // Completely disable authentication
+    this.useAuth = false;
   }
 
   /**
@@ -34,7 +35,8 @@ class ApiClient {
    * @returns {Promise<string|null>} - Authentication token or null
    */
   async getAuthToken() {
-    if (!this.useAuth || !window.AuthModule) {
+    // If auth is disabled at any level, return null
+    if (!this.useAuth || !window.AuthModule || window.ENV?.DISABLE_AUTH === 'true' || window.AppConfig?.auth?.disabled === true) {
       return null;
     }
 
@@ -60,22 +62,11 @@ class ApiClient {
     const timeout = window.AppConfig?.api?.timeout_ms || window.AppConfig?.api?.API_TIMEOUT_MS || 30000; // Default 30s timeout
     const maxRetries = window.AppConfig?.api?.maxRetries || window.AppConfig?.api?.API_MAX_RETRIES || 3; // Default 3 retries
     
-    // Set default headers
+    // Set default headers - no authentication headers added
     const headers = {
-      // Only set default Content-Type if not explicitly set or undefined in options
       ...(options.headers?.['Content-Type'] === undefined && !(options.body instanceof FormData) ? {'Content-Type': 'application/json'} : {}),
       ...options.headers,
     };
-
-    // Add authorization header if authentication is enabled
-    if (this.useAuth) {
-      const token = await this.getAuthToken();
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      } else {
-        console.warn('No auth token available for authenticated request');
-      }
-    }
     
     // Implement retry logic
     let retries = 0;

@@ -54,7 +54,7 @@ All backend services are locked down: only APIM can access the Token Proxy and A
 
 - **Technology**: Static HTML/CSS/JS
 - **Hosting**: Azure Static Web Apps
-- **Current Demo URL**: https://green-plant-0d15bda03.6.azurestaticapps.net
+- **Current Demo URL**: TODO
 - **Deployment Requirements**:
   - Azure Static Web Apps service (Standard plan recommended)
   - GitHub repository access for CI/CD integration

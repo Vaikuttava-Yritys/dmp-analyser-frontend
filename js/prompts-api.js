@@ -1,12 +1,12 @@
 /**
  * Prompts API Module
  * 
- * This module handles secure API calls to the DMP Prompts API using client credentials flow.
+ * This module handles secure API calls to the ReproAI Prompts API using client credentials flow.
  */
 
 // API endpoints from config
 const API_BASE_URL = window.AppConfig.api.baseUrl;
-const PROMPTS_API_ENDPOINT = '/api/dmp/prompts';
+const PROMPTS_API_ENDPOINT = '/api/reproai/prompts';
 
 /**
  * Get prompts from the API using secure authentication

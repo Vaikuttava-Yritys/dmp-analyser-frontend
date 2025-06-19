@@ -1,12 +1,9 @@
+// Direct API access without any authentication
 window.ENV = {
-    "NODE_ENV":  "production",
-    "API_PORT":  "8080",
-    "API_BASE_URL":  "https://dmp-apim.azure-api.net",
-    "BYPASS_AUTH_IN_DEV":  "false",
-    "AUTH_PROXY_URL":  "https://dmp-token-proxy.azurewebsites.net",
-    "API_HOST":  "dmp-apim.azure-api.net",
-    "AUTH_PROXY_TOKEN_ENDPOINT":  "/token",
-    "ALLOWED_ORIGINS":  "[\"http://localhost:3000\", \"http://localhost:3001\", \"http://127.0.0.1:3000\", \"https://green-plant-0d15bda03.6.azurestaticapps.net\"]"
+    "NODE_ENV": "production",
+    "API_PORT": "443",
+    "API_BASE_URL": "https://reproaiprod-app.lemondune-e106e75a.westeurope.azurecontainerapps.io/api/v1",
+    "ALLOWED_ORIGINS": "[\"https://reproai-frontend.azurestaticapps.net\"]"
 };
 
 // For development
@@ -15,8 +12,5 @@ window.ENV = {
 //     "API_PORT":  "8080",
 //     "API_BASE_URL":  "http://localhost:8080",
 //     "BYPASS_AUTH_IN_DEV":  "true",
-//     "AUTH_PROXY_URL":  "http://localhost:8080",
-//     "API_HOST":  "localhost",
-//     "AUTH_PROXY_TOKEN_ENDPOINT":  "/token",
-//     "ALLOWED_ORIGINS":  "[\"http://localhost:3000\", \"http://localhost:3001\", \"http://127.0.0.1:3000\, \"https://green-plant-0d15bda03.6.azurestaticapps.net\"]"
+//     "ALLOWED_ORIGINS":  "[\"http://localhost:3000\", \"http://127.0.0.1:3000\"]"
 // };

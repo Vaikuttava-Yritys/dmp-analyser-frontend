@@ -97,15 +97,15 @@ async function initApp(options = {}) {
   try {
     console.log('Initializing application...');
     
-    // Load core scripts first
-    await loadCoreScripts();
-    console.log('Core scripts loaded');
+    // Load essential scripts in order
+    await loadScript('js/config.js');
+    await loadScript('js/api.js');
     
-    // Load app.js if needed
-    if (loadAppJs) {
-      await loadScript('app.js');
-      console.log('App script loaded');
-    }
+    // Load feedback related scripts
+    await loadScript('js/feedback-api.js');
+    await loadScript('js/feedback-data.js');
+    await loadScript('js/feedback-render.js');
+    await loadScript('js/results-feedback.js');
     
     // Load init.js if needed
     if (loadInitJs) {

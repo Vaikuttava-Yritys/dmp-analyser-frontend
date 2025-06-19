@@ -206,27 +206,31 @@ async function fetchToken() {
 
 /**
  * Get access token for API calls from the backend auth proxy
- * @returns {Promise<string>} - Promise resolving to the access token
+ * @returns {Promise<string>} - Promise resolving to the access token or null if auth is disabled
  */
 async function getAccessToken() {
-  // In development mode, we can bypass token authentication for easier local testing
-  if (window.AppConfig && window.AppConfig.env === 'development' && window.AppConfig.auth.bypassAuthInDev) {
-    console.log('Development mode: Bypassing token authentication');
-    return 'dev-mode-token';
+  // If auth is disabled, return null
+  if (window.AppConfig && window.AppConfig.auth.disabled) {
+    console.warn('Authentication is disabled');
+    return null;
   }
-
-  // Check if we have a valid cached token
+  
+  // Check for cached token first
   const cachedToken = tokenManager.getToken();
   if (cachedToken) {
-    // Only log in debug mode
-    if (window.AppConfig && window.AppConfig.debug) {
-      console.log('Using cached token');
-    }
     return cachedToken;
   }
   
+  // In development with bypass enabled, return a dummy token
+  if (window.AppConfig && window.AppConfig.auth.bypassAuthInDev && window.AppConfig.env !== 'production') {
+    console.warn('Auth bypass is enabled in development mode');
+    return 'dev-dummy-token';
+  }
+  
+  // Otherwise, fetch a new token
   try {
-    return await fetchToken();
+    const token = await fetchToken();
+    return token;
   } catch (error) {
     console.error('Error acquiring token');
     throw error;
