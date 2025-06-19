@@ -25,16 +25,16 @@ function initializeConfig() {
     
     // API Configuration
     api: {
-      baseUrl: window.ENV.API_BASE_URL || 'https://dmp-apim.azure-api.net',
+      baseUrl: window.ENV.API_BASE_URL || 'http://localhost:8080',
       endpoints: {
         health: '/health',
-        analyze: '/api/dmp/enriched-checklists/analyze',
-        uploadPdf: '/api/dmp/enriched-checklists/upload-pdf', // Dedicated endpoint for PDF uploads
-        status: '/api/dmp/enriched-checklists/run/',
-        results: '/api/dmp/enriched-checklists/results/',
-        checklists: '/api/dmp/checklists',
-        feedback: '/api/dmp/feedback',
-        resultsFeedback: '/api/dmp/results-feedback'
+        analyze: '/enriched-checklists/analyze',
+        uploadPdf: '/enriched-checklists/upload-pdf', // Dedicated endpoint for PDF uploads
+        status: '/enriched-checklists/run/',
+        results: '/enriched-checklists/results/',
+        checklists: '/checklists',
+        feedback: '/feedback',
+        resultsFeedback: '/results-feedback'
       },
       timeout: parseInt(window.ENV.API_TIMEOUT || '30000', 10),
       retries: parseInt(window.ENV.API_RETRIES || '3', 10)
@@ -42,19 +42,20 @@ function initializeConfig() {
     
     // Auth Configuration
     auth: {
-      proxyUrl: window.ENV.AUTH_PROXY_URL || 'https://dmp-apim.azure-api.net/token-proxy',
+      proxyUrl: window.ENV.AUTH_PROXY_URL || 'http://localhost:8080/token-proxy',
       tokenEndpoint: window.ENV.AUTH_PROXY_TOKEN_ENDPOINT || '/token',
       clientId: window.ENV.AZURE_CLIENT_ID || '2e93d7f3-7e47-4767-ac3b-9f19e9e57784',
       tenantId: window.ENV.AZURE_TENANT_ID || 'f592cb5f-b8bc-41b9-901f-9a99ab84afa6',
       apiScope: window.ENV.AZURE_API_SCOPE || 'api://2fb1d88c-02fe-4a8e-9f8d-dadbc9380dc3/.default',
-      bypassAuthInDev: window.ENV.BYPASS_AUTH_IN_DEV === 'true' || false
+      bypassAuthInDev: window.ENV.BYPASS_AUTH_IN_DEV === 'true' || false,
+      disabled: window.ENV.DISABLE_AUTH === 'true' || false
     },
     
     // UI Configuration
     ui: {
       debug: window.ENV.UI_DEBUG === 'true',
       showApiStatus: window.ENV.SHOW_API_STATUS === 'true',
-      defaultChecklistId: window.ENV.DEFAULT_CHECKLIST_ID || 'finnish_dmp_evaluation'
+      defaultChecklistId: window.ENV.DEFAULT_CHECKLIST_ID || 'nature_1domain'
     }
   };
   

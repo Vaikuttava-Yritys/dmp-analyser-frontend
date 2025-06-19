@@ -1,5 +1,5 @@
 // Default parameters for analysis (will be overridden by dropdown selections)
-let selectedChecklistId = window.AppConfig?.ui?.defaultChecklistId || "finnish_dmp_evaluation";
+let selectedChecklistId = window.AppConfig?.ui?.defaultChecklistId || "reproai_manuscript_evaluation";
 let selectedConfigId = "Full-GPT4-turbo-preview";
 
 // Global variables to store current analysis info
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     checkApiHealth();
     
     // Set up form submission handler
-    const form = document.getElementById('dmp-form');
+    const form = document.getElementById('reproai-form');
     if (form) {
         form.addEventListener('submit', handleAnalysisSubmit);
     }
@@ -238,7 +238,7 @@ async function handleAnalysisSubmit(event) {
             formData.append('pdf_file', pdfFile);
             
             // Build URL with query parameters
-            let uploadUrl = `${API_BASE}/api/dmp/enriched-checklists/upload-pdf?checklist_id=${encodeURIComponent(selectedChecklistId)}&config_id=${encodeURIComponent(selectedConfigId)}`;
+            let uploadUrl = `${API_BASE}/api/reproai/enriched-checklists/upload-pdf?checklist_id=${encodeURIComponent(selectedChecklistId)}&config_id=${encodeURIComponent(selectedConfigId)}`;
             
             // Add user email if provided
             if (userEmail) {
@@ -432,7 +432,7 @@ async function handleExportPDF() {
     
     try {
         // Direct download using the run_id endpoint
-        const pdfUrl = `${API_BASE}/api/dmp/enriched-checklists/run/${currentRunId}/export-pdf?access_token=${currentAccessToken}`;
+        const pdfUrl = `${API_BASE}/api/reproai/enriched-checklists/run/${currentRunId}/export-pdf?access_token=${currentAccessToken}`;
         
         // Open the PDF directly in a new tab
         window.open(pdfUrl, '_blank');
@@ -467,7 +467,7 @@ async function handleDownloadChecklist(event) {
         console.log('Downloading checklist...');
         
         // Create a URL to the checklist PDF export endpoint
-        const checklistUrl = `${API_BASE}/api/dmp/checklists/finnish_dmp_evaluation_1domain/export-pdf`;
+        const checklistUrl = `${API_BASE}/api/reproai/checklists/reproai_manuscript_evaluation/export-pdf`;
         
         // Open the PDF in a new tab
         window.open(checklistUrl, '_blank');
