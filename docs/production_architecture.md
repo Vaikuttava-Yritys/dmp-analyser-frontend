@@ -1,71 +1,77 @@
-# DMP Analyser Production Architecture
+# Production Architecture
 
 ## Overview
 
-The DMP Analyser system consists of four main components deployed in Azure.
-Architecture now supports secure token issuance and role-based access to API via Azure AD and APIM.
+The system consists of seven main components deployed in Azure.
+Architecture supports secure token issuance and role-based access to API via Azure AD and APIM.
 All backend services are locked down: only APIM can access the Token Proxy and API backend.
 
-1. **Frontend** – Azure Static Web Apps  
-2. **API Backend** – Azure Container Apps  
-3. **Database** – MongoDB Atlas (or Azure CosmosDB)  
+1. **Frontend** – React UI in Docker container (Azure Container Apps)
+2. **API Backend** – Python FastAPI in Docker container (Azure Container Apps)
+3. **Database** – MongoDB Atlas (or Azure CosmosDB)
 4. **Token Proxy** – Azure Web App (secured via Azure API Management)
+5. **SharePoint Integration** – For document storage and retrieval
+6. **Dockling API** – For PDF text extraction
+7. **Azure Logic App** – For email notifications and workflow automation
 
 ## Architecture Diagram
 
 ```
 ┌────────────────────┐                ┌────────────────────┐                ┌─────────────────┐
 │                    │                │                    │                │                 │
-│   Frontend (SPA)   │───────────────▶│   API Backend      │───────────────▶│   MongoDB Atlas │
-│   Azure Static Web │                │   Azure Container  │                │   or CosmosDB   │
+│   Frontend (React) │───────────────▶│   API Backend      │───────────────▶│   MongoDB Atlas │
+│   Azure Container  │                │   Azure Container  │                │   or CosmosDB   │
 └─────────┬──────────┘                └─────────┬──────────┘                └─────────────────┘
            │                                     │                                     ▲
            │                                     │                                     │
            │                                     ▼                                     │
            │                           ┌────────────────────┐                          │
            │                           │                    │                          │
-           │                           │   LLM Services     │                          │
-           │                           │   OpenAI/Anthropic │                          │
-           │                           └────────────────────┘                          │
+           │                           │   LLM Services     │◀─────┐                   │
+           │                           │   OpenAI/Anthropic │      │                   │
+           │                           └────────────────────┘      │                   │
+           │                                                       │                   │
+           ▼                                                       ▼                   │
+┌────────────────────┐                ┌────────────────────┐    ┌─────────────────┐    │
+│                    │                │                    │    │                 │    │
+│   Token Proxy      │◀───────────────│   SharePoint       │    │  Azure Logic App│    │
+│   Azure Web App    │                │   Integration      │    │  Email Notif.   │    │
+└─────────┬──────────┘                └─────────┬──────────┘    └─────────────────┘    │
+           ▲                                     │                        ▲             │
+           │ 🔒 IP-restricted to APIM            │                        │             │
+           ▼                                     ▼                        │             │
+┌────────────────────┐                ┌────────────────────┐              │             │
+│                    │                │                    │              │             │
+│   Azure API Mgmt   │◀───────────────│   Dockling API     │──────────────┘             │
+│  (Public Entrypoint)│                │   PDF Extraction   │                            │
+└────────────────────┘                └────────────────────┘                            │
+           ▲                                                                           │
+           │ 🔐 Requires subscription key                                              │
            │                                                                           │
            ▼                                                                           │
-┌────────────────────┐                                                                │
-│                    │                                                                │
-│   Token Proxy      │◀──────────────────────────────────────────────────────────────┘
-│   Azure Web App    │
-└─────────┬──────────┘
-           ▲
-           │ 🔒 IP-restricted to APIM
-           ▼
-┌────────────────────┐
-│                    │
-│   Azure API Mgmt   │
-│  (Public Entrypoint)│
-└────────────────────┘
-           ▲
-           │ 🔐 Requires subscription key
-           │
-           ▼
 ```
 
 ## Components
 
-### Frontend (Azure Static Web Apps)
+### Frontend (Azure Container Apps)
 
-- **Technology**: Static HTML/CSS/JS
-- **Hosting**: Azure Static Web Apps
-- **Current Demo URL**: https://green-plant-0d15bda03.6.azurestaticapps.net
+- **Technology**: React, TypeScript, Material UI
+- **Hosting**: Azure Container Apps (Docker container)
+- **Current Demo URL**: TODO
 - **Deployment Requirements**:
-  - Azure Static Web Apps service (Standard plan recommended)
-  - GitHub repository access for CI/CD integration
+  - Azure Container Apps environment
+  - Docker container with Nginx serving React app
+  - 0.5-1.0 CPU cores, 1.0-2.0 GB memory
   - Custom domain (optional)
 - **Features**:
-  - Simple DMP analysis interface
+  - Modern, responsive user interface
+  - Dashboard with analysis overview
+  - PDF viewer with annotation support
   - Results viewing with PDF export capability
   - Shareable result links via access tokens
 - **Resource Requirements**:
   - Standard tier recommended for production use
-  - No additional compute resources needed
+  - Autoscaling based on demand
 
 ### API Backend (Azure Container Apps)
 
@@ -77,7 +83,7 @@ All backend services are locked down: only APIM can access the Token Proxy and A
   - Azure Container Apps environment
   - Container listening on port 8002
   - 1.0 CPU cores minimum, 2.0 GB memory minimum
-  - Ingress restricted to APIM IP (132.220.54.209) using access restrictions
+  - Ingress restricted to APIM IP using access restrictions
 - Public access is blocked; only APIM can communicate with the backend
   - Environment variables (see Environment Configuration section)
 - **Key Services**:
@@ -86,6 +92,8 @@ All backend services are locked down: only APIM can access the Token Proxy and A
   - LLM integration (requires API keys)
   - PDF generation
   - Token-based authentication for results viewing
+  - SharePoint document integration
+  - Dockling API integration for PDF text extraction
 
 ### Database (MongoDB Atlas, later in Azure CosmosDB)
 - **Technology**: MongoDB
@@ -135,27 +143,43 @@ All backend services are locked down: only APIM can access the Token Proxy and A
    - CORS configuration required (see Environment Configuration section)
 
 2. **Frontend ↔ Token Proxy**
-
-- URL: `https://dmp-apim.azure-api.net/token-proxy/token`
-- **CORS**: Still managed via ALLOWED_ORIGINS (unchanged)
-- Subscription key required to access this endpoint
-- Direct access to the Web App is blocked
+   - URL: `https://apim.azure-api.net/token-proxy/token`
+   - **CORS**: Managed via ALLOWED_ORIGINS
+   - Subscription key required to access this endpoint
+   - Direct access to the Web App is blocked
 
 3. **Frontend ↔ API Backend**
-
-- Secured with token acquired from proxy
-- RESTful endpoints for submitting and fetching DMP analysis
-- API backend is only reachable via APIM
-- Public ingress to the container app is IP-restricted to APIM
+   - Secured with token acquired from proxy
+   - RESTful endpoints for submitting and fetching analysis
+   - API backend is only reachable via APIM
+   - Public ingress to the container app is IP-restricted to APIM
 
 4. **API to Database**:
    - Asynchronous MongoDB connections
-   - Data storage and retrieval for analyses and manuscripts
+   - Data storage and retrieval for analyses and results
    - Connection string provided via environment variables
 
 5. **API to External Services**:
    - OpenAI API and Anthropic API for LLM-based analysis
    - API keys required (see Environment Configuration section)
+
+6. **API to SharePoint**:
+   - Microsoft Graph API integration for document access
+   - OAuth2 authentication with Azure AD
+   - Document retrieval and storage capabilities
+   - Permissions managed through Azure AD app registration
+
+7. **API to Dockling**:
+   - REST API integration for PDF text extraction
+   - Handles complex document formats and layouts
+   - Extracts structured text with position information
+   - API key required for authentication
+
+8. **API to Azure Logic App**:
+   - HTTP trigger endpoints for workflow automation
+   - Email notifications for analysis completion
+   - Scheduled report generation
+   - Integration with other Azure services
 
 ## Security Considerations
 
@@ -217,10 +241,12 @@ All backend services are locked down: only APIM can access the Token Proxy and A
    - Enable external ingress with IP restriction to APIM's IP (132.220.54.209)
 
 3. **Frontend Deployment**:
-   - Create Azure Static Web Apps service
-   - Connect to existing GitHub repository
-   - Configure build settings according to repository structure
-   - Add API URL as environment variable during build
+   - Create Azure Container Apps environment (if not already created)
+   - Build and push the React UI Docker container to container registry
+   - Deploy container to Azure Container Apps
+   - Configure environment variables for API endpoints
+   - Set target port to 80 (Nginx default)
+   - Enable external ingress with proper security settings
 
 5. **Token Proxy Deployment**:
 
